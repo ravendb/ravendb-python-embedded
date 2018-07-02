@@ -1,4 +1,5 @@
 from raven_embedded.server_options import ServerOptions
+from raven_embedded.ravenserver_runner import RavenServerRunner
 import pkg_resources
 import logging
 
@@ -34,4 +35,5 @@ class EmbeddedServer:
         start_server = self._run_server(server_options)
 
     def _run_server(self, server_options):
+        process = RavenServerRunner.run(server_options)
         return ""

@@ -65,7 +65,7 @@ class ServerOptions:
         if self.security is not None:
             raise InvalidOperationException("The security has already been setup for this ServerOptions object")
 
-        self.security = _SecurityOptions(certificate_path=client_cert_path, certificate_exec=cert_exec,
+        self.security = _SecurityOptions(client_certificate=client_cert_path, certificate_exec=cert_exec,
                                          certificate_arguments=cert_exec_args,
                                          server_cert_fingerprint=server_cert_fingerprint)
 
