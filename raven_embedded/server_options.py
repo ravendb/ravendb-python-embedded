@@ -1,6 +1,5 @@
 from pyravendb.custom_exceptions.exceptions import InvalidOperationException
 from pyravendb.tools.utils import Utils
-
 from datetime import timedelta
 import os
 
@@ -9,9 +8,13 @@ class ServerOptions:
     def __init__(self, framework_version="2.1.1", data_directory=None, server_directory=None, server_uri=None,
                  dotnet_path="dotnet", accept_eula=True, max_server_startup_time_duration=timedelta(minutes=1),
                  command_line_args=None):
+
         self.framework_version = framework_version
         self.data_directory = data_directory if data_directory is not None else os.path.realpath("RavenDB")
-        self.server_directory = server_directory if server_directory is not None else os.path.realpath("RavenDBServer")
+        if not server_directory:
+            import raven_embedded
+            server_directory = os.path.join(os.path.dirname(raven_embedded.__file__), "RavenDBServer")
+        self.server_directory = server_directory
         self.server_uri = server_uri
         self.dotnet_path = dotnet_path
         self.accept_eula = accept_eula

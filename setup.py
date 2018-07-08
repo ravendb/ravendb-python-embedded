@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name='pyravenembedded',
     packages=find_packages(),
-    version='1.0.0',
+    version='4.1.0.1',
     description='RavenDB Embedded library to run ravendb in embedded way',
     author='Idan Haim Shalom',
     author_email='haimdude@gmail.com',
