@@ -5,7 +5,7 @@ import os
 
 
 class ServerOptions:
-    def __init__(self, framework_version="2.1.1", data_directory=None, server_directory=None, server_uri=None,
+    def __init__(self, framework_version="2.1.1", data_directory=None, server_directory=None, server_url=None,
                  dotnet_path="dotnet", accept_eula=True, max_server_startup_time_duration=timedelta(minutes=1),
                  command_line_args=None):
 
@@ -15,7 +15,7 @@ class ServerOptions:
             import raven_embedded
             server_directory = os.path.join(os.path.dirname(raven_embedded.__file__), "RavenDBServer")
         self.server_directory = server_directory
-        self.server_uri = server_uri
+        self.server_url = server_url
         self.dotnet_path = dotnet_path
         self.accept_eula = accept_eula
         self.max_server_startup_time_duration = max_server_startup_time_duration

@@ -1,9 +1,9 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='pyravenembedded',
+    name='pyraven_embedded',
     packages=find_packages(),
-    version='4.1.0.1',
+    version='4.1.0.2',
     description='RavenDB Embedded library to run ravendb in embedded way',
     author='Idan Haim Shalom',
     author_email='haimdude@gmail.com',
@@ -12,7 +12,7 @@ setup(
     keywords='pyravendb embedded database nosql doc db',
     install_requires=
     [
-        'pyravendb >= 4.0.4.2',
+        'pyravendb >= 4.0.4.5',
     ],
     include_package_data=True,
     zip_safe=False

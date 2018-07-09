@@ -27,9 +27,9 @@ class RavenServerRunner:
         server_options.command_line_args.append("--DataDir=" + server_options.data_directory)
 
         if server_options.security:
-            if not server_options.server_uri:
-                server_options.server_uri = "https://127.0.0.1:0"
-            server_options.command_line_args.append("--ServerUrl=" + server_options.server_uri)
+            if not server_options.server_url:
+                server_options.server_url = "https://127.0.0.1:0"
+            server_options.command_line_args.append("--ServerUrl=" + server_options.server_url)
             if server_options.security.certificate_path is not None:
                 server_options.command_line_args.append(
                     "--Security.Certificate.Path=" + server_options.security.certificate_path)
@@ -42,9 +42,9 @@ class RavenServerRunner:
                 "--Security.WellKnownCertificates.Admin=" + Utils.get_cert_file_fingerprint(
                     server_options.security.client_certificate))
         else:
-            if not server_options.server_uri:
-                server_options.server_uri = "http://127.0.0.1:0"
-            server_options.command_line_args.append("--ServerUrl=" + server_options.server_uri)
+            if not server_options.server_url:
+                server_options.server_url = "http://127.0.0.1:0"
+            server_options.command_line_args.append("--ServerUrl=" + server_options.server_url)
 
         server_options.command_line_args[0:0] = [server_dll_path]
         server_options.command_line_args[0:0] = ["--fx-version " + server_options.framework_version]
