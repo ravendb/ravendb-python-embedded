@@ -1,6 +1,9 @@
 from pyravendb.custom_exceptions.exceptions import InvalidOperationException
-from raven_embedded.server_options import ServerOptions
 from pyravendb.tools.utils import Utils
+
+from raven_embedded.tools.helpers import add_quotes_if_needed
+from raven_embedded.server_options import ServerOptions
+
 import subprocess
 import signal
 import os
@@ -24,15 +27,14 @@ class RavenServerRunner:
         server_options.command_line_args.append("--Embedded.ParentProcessId=" + str(os.getpid()))
         server_options.command_line_args.append("--License.Eula.Accepted=" + str(server_options.accept_eula))
         server_options.command_line_args.append("--Setup.Mode=None")
-        server_options.command_line_args.append("--DataDir=" + server_options.data_directory)
+        server_options.command_line_args.append(r"--DataDir=" + add_quotes_if_needed(server_options.data_directory))
 
         if server_options.security:
             if not server_options.server_url:
                 server_options.server_url = "https://127.0.0.1:0"
-            server_options.command_line_args.append("--ServerUrl=" + server_options.server_url)
             if server_options.security.certificate_path is not None:
                 server_options.command_line_args.append(
-                    "--Security.Certificate.Path=" + server_options.security.certificate_path)
+                    "--Security.Certificate.Path=" + add_quotes_if_needed(server_options.security.certificate_path))
             else:
                 server_options.command_line_args.append(
                     "--Security.Certificate.Exec=" + server_options.security.certificate_exec)
@@ -44,12 +46,12 @@ class RavenServerRunner:
         else:
             if not server_options.server_url:
                 server_options.server_url = "http://127.0.0.1:0"
-            server_options.command_line_args.append("--ServerUrl=" + server_options.server_url)
 
-        server_options.command_line_args[0:0] = [server_dll_path]
+        server_options.command_line_args.append("--ServerUrl=" + server_options.server_url)
+        server_options.command_line_args[0:0] = [add_quotes_if_needed(server_dll_path)]
         server_options.command_line_args[0:0] = ["--fx-version " + server_options.framework_version]
 
-        server_options.command_line_args[0:0] = [server_options.dotnet_path]
+        server_options.command_line_args[0:0] = [add_quotes_if_needed(server_options.dotnet_path)]
         argument_string = " ".join(server_options.command_line_args)
         try:
             process = subprocess.Popen(argument_string,

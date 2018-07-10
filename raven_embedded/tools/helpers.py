@@ -1,6 +1,12 @@
 from threading import Thread
 
 
+def add_quotes_if_needed(s):
+    if [True for e in [" ", "\n", "\r"] if e in s] and s[0] != '"':
+        s = '\"{0}\"'.format(s)
+    return s
+
+
 def singleton(my_class):
     instances = {}
 
