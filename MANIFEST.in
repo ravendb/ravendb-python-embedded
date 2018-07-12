@@ -1,2 +1,2 @@
 recursive-include raven_embedded/RavenDBServer *
-include README.md
+include README.rst
