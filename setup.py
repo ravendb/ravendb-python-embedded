@@ -1,8 +1,12 @@
 from setuptools import setup, find_packages
 
+with open("README.rst") as file:
+    long_description = file.read()
+
 setup(
-    name='pyraven_embedded',
+    name='pyraven-embedded',
     packages=find_packages(),
+    long_description=long_description,
     version='4.1.0.2',
     description='RavenDB Embedded library to run ravendb in embedded way',
     author='Idan Haim Shalom',
