@@ -1,8 +1,8 @@
 from pyravendb.custom_exceptions.exceptions import InvalidOperationException
 from pyravendb.tools.utils import Utils
 
-from raven_embedded.tools.helpers import add_quotes_if_needed
-from raven_embedded.server_options import ServerOptions
+from pyravendb_embedded.tools.helpers import add_quotes_if_needed
+from pyravendb_embedded.server_options import ServerOptions
 
 import subprocess
 import signal
