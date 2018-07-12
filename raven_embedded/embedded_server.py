@@ -154,6 +154,8 @@ class EmbeddedServer:
             subprocess.Popen('cmd "/c start \"Stop & look at studio\" \"{0}\"'.format(server_url.geturl()))
         elif sys.platform.startswith("linux"):
             subprocess.Popen('xdg-open ' + server_url.geturl())
+        elif sys.platform.startswith('darwin'):
+            subprocess.Popen('open ' + server_url.geturl())
         else:
             raise NotSupportedException(
                 "This action is not supported by you operation system ({0})".format(sys.platform))
