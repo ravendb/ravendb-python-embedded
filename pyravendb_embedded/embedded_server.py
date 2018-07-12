@@ -2,11 +2,11 @@ from pyravendb.custom_exceptions.exceptions import InvalidOperationException, No
 from pyravendb.raven_operations.server_operations import CreateDatabaseOperation
 from pyravendb.store.document_store import DocumentStore
 
-from raven_embedded.ravenserver_runner import RavenServerRunner
-from raven_embedded.database_options import DatabaseOptions
-from raven_embedded.tools.helpers import PropagatingThread
-from raven_embedded.server_options import ServerOptions
-from raven_embedded.tools.helpers import singleton
+from pyravendb_embedded.ravenserver_runner import RavenServerRunner
+from pyravendb_embedded.database_options import DatabaseOptions
+from pyravendb_embedded.tools.helpers import PropagatingThread
+from pyravendb_embedded.server_options import ServerOptions
+from pyravendb_embedded.tools.helpers import singleton
 
 from urllib.parse import urlparse
 from datetime import datetime
