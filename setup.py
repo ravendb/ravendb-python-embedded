@@ -13,7 +13,7 @@ setup(
     author='HibernatingRhinos',
     author_email='support@ravendb.net',
     url='https://github.com/ravendb/RavenDB-Python-Client',
-    license='MIT',
+    license='Custom EULA',
     keywords='pyravendb embedded database nosql doc db',
     install_requires=
     [
