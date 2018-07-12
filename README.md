@@ -1,5 +1,5 @@
 ## Overview
-Pyravendb-Embedded is a RavnenDB package for running RavenDB in embedded mode.
+Pyravendb-Embedded is a RavenDB package for running RavenDB in embedded mode.
 
 ```python
 EmbeddedServer().start_server()
