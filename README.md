@@ -1,5 +1,5 @@
 ## Overview
-PyRaven-Embedded is a RavnenDB package for running RavenDB in embedded mode.
+Pyravendb-Embedded is a RavnenDB package for running RavenDB in embedded mode.
 
 ```python
 EmbeddedServer().start_server()
@@ -10,11 +10,11 @@ with EmbeddedServer().get_document_store("Embedded") as store:
 ``` 
 
 ## Installation
-Install from [PyPi](https://pypi.python.org/pypi), as [pyraven-embedded](https://pypi.python.org/project/pyraven-embedded).
+Install from [PyPi](https://pypi.python.org/pypi), as [pyravendb-embedded](https://pypi.python.org/project/pyravendb-embedded).
 ```bash
-pip install pyravendb
+pip install pyravendb-embedded
 ```
-Install PyRaven-Embedded from pip will provide you with a copy of RavenDB server binaries files as well
+Install Pyravendb-Embedded from pip will provide you with a copy of RavenDB server binaries files as well
 
 ## Usage
 #### Start a server
@@ -35,7 +35,7 @@ server_options = ServerOptions(data_directory="MYPATH/RavenDBDataDir")
 EmbeddedServer().start_server(server_options)
 ```
 ##### Security
-There are two options to make ravendb secured in PyRaven-Embedded:<br />
+There are two options to make ravendb secured in Pyravendb-Embedded:<br />
 1) `secured(certificate_path, certificate_password=None)` - For this option you will put a path to a .pfx file for the server and a password to the file
 if you have one.
     ```python
@@ -79,7 +79,7 @@ with EmbeddedServer().get_document_store(database_options) as store:
 ```
 
 #### Open the RavenDB studio in the browser
-To open RavenDB studio from PyRaven-Embedded you can use `open_studio_in_browser` method and the studio will open automatically
+To open RavenDB studio from Pyravendb-Embedded you can use `open_studio_in_browser` method and the studio will open automatically
 one your default browser.
 
 ```python
@@ -89,10 +89,6 @@ EmbeddedServer().open_studio_in_browser()
 ## Acknowledgments
 **EmbeddedServer** class is a singleton! <br />
 Every time we use `EmbeddedServer()` we will get the same instance.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
 
 
 
