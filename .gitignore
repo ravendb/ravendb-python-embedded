@@ -2,7 +2,7 @@
 /test.py
 /dist
 /pyravendb_embedded.egg-info
-/raven_embedded/RavenDBServer
+/pyravendb_embedded/RavenDBServer
 *.pyc
 *.log
 *.raven-topology

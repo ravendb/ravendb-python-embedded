@@ -12,8 +12,8 @@ class ServerOptions:
         self.framework_version = framework_version
         self.data_directory = data_directory if data_directory is not None else os.path.realpath("RavenDB")
         if not server_directory:
-            import raven_embedded
-            server_directory = os.path.join(os.path.dirname(raven_embedded.__file__), "RavenDBServer")
+            import pyravendb_embedded
+            server_directory = os.path.join(os.path.dirname(pyravendb_embedded.__file__), "RavenDBServer")
         self.server_directory = server_directory
         self.server_url = server_url
         self.dotnet_path = dotnet_path

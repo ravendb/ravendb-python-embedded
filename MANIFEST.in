@@ -1,2 +1,2 @@
-recursive-include raven_embedded/RavenDBServer *
+recursive-include pyravendb_embedded/RavenDBServer *
 include README.rst
