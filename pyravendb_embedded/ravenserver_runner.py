@@ -56,7 +56,8 @@ class RavenServerRunner:
         try:
             process = subprocess.Popen(argument_string,
                                        stdout=subprocess.PIPE,
-                                       stderr=subprocess.STDOUT)
+                                       stderr=subprocess.STDOUT,
+                                       stdin=subprocess.PIPE)
         except Exception as e:
             process.send_signal(signal.SIGINT)
             raise InvalidOperationException(
