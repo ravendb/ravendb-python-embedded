@@ -14,11 +14,11 @@ Install from [PyPi](https://pypi.python.org/pypi), as [pyravendb-embedded](https
 ```bash
 pip install pyravendb-embedded
 ```
-Install Pyravendb-Embedded from pip will provide you with a copy of RavenDB server binaries files as well
+Install Pyravendb-Embedded from pip will provide you with a copy of RavenDB server binaries files as well.
 
 ## Usage
 #### Start a server
-To start RavenDB server you only need to run start_server()` method from `EmbeddedServer` instance and that's it.
+To start RavenDB server you only need to run `start_server()` method from `EmbeddedServer` instance and that's it.
 ```python
 EmbeddedServer.start_server()
 ```
@@ -64,7 +64,7 @@ EmbeddedServer().start_server()
 with EmbeddedServer().get_document_store("Test") as store:
     # Your code here
 ```
-`get_document_store` method can get or only the database_name or DatabaseOption
+`get_document_store` method can get a database_name or DatabaseOption
 ##### DatabaseOptions
 * **database_name** - The name of the database
 * **skip_creating_database** - `get_document_store` will create a new database if the database is not exists,
@@ -78,7 +78,7 @@ with EmbeddedServer().get_document_store(database_options) as store:
     # Your code here
 ```
 
-#### Open the RavenDB studio in the browser
+#### Open RavenDB studio in the browser
 To open RavenDB studio from Pyravendb-Embedded you can use `open_studio_in_browser` method and the studio will open automatically
 one your default browser.
 
