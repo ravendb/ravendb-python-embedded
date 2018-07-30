@@ -27,6 +27,7 @@ class RavenServerRunner:
         server_options.command_line_args.append("--Embedded.ParentProcessId=" + str(os.getpid()))
         server_options.command_line_args.append("--License.Eula.Accepted=" + str(server_options.accept_eula))
         server_options.command_line_args.append("--Setup.Mode=None")
+        server_options.command_line_args.append("--non-console")
         server_options.command_line_args.append(r"--DataDir=" + add_quotes_if_needed(server_options.data_directory))
 
         if server_options.security:
@@ -53,13 +54,16 @@ class RavenServerRunner:
 
         server_options.command_line_args[0:0] = [add_quotes_if_needed(server_options.dotnet_path)]
         argument_string = " ".join(server_options.command_line_args)
+        process = None
         try:
             process = subprocess.Popen(argument_string,
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.STDOUT,
-                                       stdin=subprocess.PIPE)
+                                       stdin=subprocess.PIPE,
+                                       universal_newlines=True)
         except Exception as e:
-            process.send_signal(signal.SIGINT)
+            if process:
+                process.kill()
             raise InvalidOperationException(
                 "Unable to execute server." + os.linesep + "Command was:" + os.linesep + argument_string, e)
 

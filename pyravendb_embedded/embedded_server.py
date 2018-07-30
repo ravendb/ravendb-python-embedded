@@ -40,10 +40,34 @@ class EmbeddedServer:
         self.logger.setLevel(logging.INFO)
         # add the handlers to the logger
         self.logger.addHandler(handler)
+        self._process = None
+        self._gracefully_exit_timeout = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def close(self):
+        if self._server_task is None:
+            return
+
+        _, process = self._server_task.join()
+        with self.lock:
+            self._server_task = None
+        self._kill_slaved_server_process(process)
+
+        with self._document_stores_lock:
+            for _, value in self._document_stores.items():
+                value.close()
+            self._document_stores.clear()
 
     def start_server(self, server_options=None):
         if server_options is None:
             server_options = ServerOptions()
+
+        self._gracefully_exit_timeout = server_options.gracefully_exit_timeout
 
         start_server = PropagatingThread(target=self._run_server, args=(server_options,), daemon=True)
         with self.lock:
@@ -61,16 +85,16 @@ class EmbeddedServer:
         if self.logger.isEnabledFor(logging.INFO):
             self.logger.info("Starting global server: " + str(process.pid))
 
-        log = ""
+        log = []
         start = datetime.now()
         while True:
-            line = process.stdout.readline().decode('utf-8')
+            line = process.stdout.readline()
             if datetime.now() - start > server_options.max_server_startup_time_duration:
                 break
 
-            log += line + os.linesep
+            log.append(line + os.linesep)
             if not line:
-                raise InvalidOperationException("Unable to start server, log is: " + os.linesep + log)
+                raise InvalidOperationException("Unable to start server, log is: " + os.linesep + " ".join(log))
 
             if "Server available on" in line:
                 server_url = urlparse(line[len("Server available on: "):].rstrip())
@@ -78,7 +102,7 @@ class EmbeddedServer:
 
         if not server_url:
             self._kill_slaved_server_process(process)
-            raise InvalidOperationException("Unable to start server, log is: " + os.linesep + log)
+            raise InvalidOperationException("Unable to start server, log is: " + os.linesep + " ".join(log))
 
         return server_url, process
 
@@ -135,18 +159,19 @@ class EmbeddedServer:
         with self._document_stores_lock:
             return next(self._document_stores.setdefault(database_name, _create_document_store()))
 
-    def _kill_slaved_server_process(self, process):
+    def _kill_slaved_server_process(self, process: subprocess.Popen):
         if process is None or process.poll():
             return
-
-        if self.logger.isEnabledFor(logging.INFO):
-            self.logger.info("Killing global server PID {0}.".format(process.pid))
-
         try:
-            process.send_signal(signal.SIGINT)
-        except Exception as e:
-            if self.logger.isEnabledFor(logging.INFO):
-                self.logger.info("Failed to kill process {0}".format(process.pid), e)
+            process.communicate("q\ny\n", timeout=self._gracefully_exit_timeout)
+        except subprocess.TimeoutExpired:
+            try:
+                if self.logger.isEnabledFor(logging.INFO):
+                    self.logger.info("Killing global server PID {0}.".format(process.pid))
+                process.kill()
+            except Exception as e:
+                if self.logger.isEnabledFor(logging.INFO):
+                    self.logger.info("Failed to kill process {0}".format(process.pid), e)
 
     def open_studio_in_browser(self):
         server_url = self.get_server_url()
