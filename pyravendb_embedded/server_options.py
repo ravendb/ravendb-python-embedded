@@ -5,9 +5,9 @@ import os
 
 
 class ServerOptions:
-    def __init__(self, framework_version="2.1.1", data_directory=None, server_directory=None, server_url=None,
+    def __init__(self, framework_version="2.1.2", data_directory=None, server_directory=None, server_url=None,
                  dotnet_path="dotnet", accept_eula=True, max_server_startup_time_duration=timedelta(minutes=1),
-                 command_line_args=None):
+                 command_line_args=None, gracefully_exit_timeout = 3):
 
         self.framework_version = framework_version
         self.data_directory = data_directory if data_directory is not None else os.path.realpath("RavenDB")
@@ -18,6 +18,7 @@ class ServerOptions:
         self.server_url = server_url
         self.dotnet_path = dotnet_path
         self.accept_eula = accept_eula
+        self.gracefully_exit_timeout = gracefully_exit_timeout
         self.max_server_startup_time_duration = max_server_startup_time_duration
         if command_line_args is None:
             command_line_args = []
