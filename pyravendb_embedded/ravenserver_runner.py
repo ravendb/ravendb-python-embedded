@@ -27,7 +27,6 @@ class RavenServerRunner:
         server_options.command_line_args.append("--Embedded.ParentProcessId=" + str(os.getpid()))
         server_options.command_line_args.append("--License.Eula.Accepted=" + str(server_options.accept_eula))
         server_options.command_line_args.append("--Setup.Mode=None")
-        server_options.command_line_args.append("--non-console")
         server_options.command_line_args.append(r"--DataDir=" + add_quotes_if_needed(server_options.data_directory))
 
         if server_options.security:

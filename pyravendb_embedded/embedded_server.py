@@ -13,7 +13,6 @@ from datetime import datetime
 from threading import Lock
 import subprocess
 import logging
-import signal
 import sys
 import os
 
@@ -41,7 +40,7 @@ class EmbeddedServer:
         # add the handlers to the logger
         self.logger.addHandler(handler)
         self._process = None
-        self._gracefully_exit_timeout = None
+        self._graceful_shutdown_timeout = None
 
     def __enter__(self):
         return self
@@ -56,7 +55,7 @@ class EmbeddedServer:
         _, process = self._server_task.join()
         with self.lock:
             self._server_task = None
-        self._kill_slaved_server_process(process)
+        self._shutdown_server_process(process)
 
         with self._document_stores_lock:
             for _, value in self._document_stores.items():
@@ -67,7 +66,7 @@ class EmbeddedServer:
         if server_options is None:
             server_options = ServerOptions()
 
-        self._gracefully_exit_timeout = server_options.gracefully_exit_timeout
+        self._graceful_shutdown_timeout = server_options.graceful_shutdown_timeout
 
         start_server = PropagatingThread(target=self._run_server, args=(server_options,), daemon=True)
         with self.lock:
@@ -101,7 +100,7 @@ class EmbeddedServer:
                 break
 
         if not server_url:
-            self._kill_slaved_server_process(process)
+            self._shutdown_server_process(process)
             raise InvalidOperationException("Unable to start server, log is: " + os.linesep + " ".join(log))
 
         return server_url, process
@@ -159,11 +158,11 @@ class EmbeddedServer:
         with self._document_stores_lock:
             return next(self._document_stores.setdefault(database_name, _create_document_store()))
 
-    def _kill_slaved_server_process(self, process: subprocess.Popen):
+    def _shutdown_server_process(self, process: subprocess.Popen):
         if process is None or process.poll():
             return
         try:
-            process.communicate("q\ny\n", timeout=self._gracefully_exit_timeout)
+            process.communicate("q\ny\n", timeout=self._graceful_shutdown_timeout.total_seconds())
         except subprocess.TimeoutExpired:
             try:
                 if self.logger.isEnabledFor(logging.INFO):
