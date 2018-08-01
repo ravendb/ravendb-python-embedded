@@ -162,8 +162,15 @@ class EmbeddedServer:
         if process is None or process.poll():
             return
         try:
+            if self.logger.isEnabledFor(logging.INFO):
+                self.logger.info("Try shutdown server PID {0} gracefully.".format(process.pid))
+
             process.communicate("q\ny\n", timeout=self._graceful_shutdown_timeout.total_seconds())
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as e:
+            if self.logger.isEnabledFor(logging.INFO):
+                self.logger.info(
+                    "Failed to shutdown server PID {0} gracefully in {1}".format(process.pid,
+                                                                                 self._graceful_shutdown_timeout), e)
             try:
                 if self.logger.isEnabledFor(logging.INFO):
                     self.logger.info("Killing global server PID {0}.".format(process.pid))
