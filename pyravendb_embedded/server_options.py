@@ -22,7 +22,7 @@ class ServerOptions:
             minutes=1)
         self.graceful_shutdown_timeout = graceful_shutdown_timeout if graceful_shutdown_timeout else timedelta(
             seconds=30)
-        if not isinstance(graceful_shutdown_timeout, timedelta):
+        if not isinstance(self.graceful_shutdown_timeout, timedelta):
             raise ValueError("graceful_shutdown_timeout must be timedelta")
 
         if command_line_args is None:
