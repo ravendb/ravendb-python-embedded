@@ -4,7 +4,7 @@ setup(
     name='pyravendb-embedded',
     packages=find_packages(),
     long_description=open('README.rst').read(),
-    version='4.1.1.2',
+    version='4.1.1.3',
     description='RavenDB Embedded library to run ravendb in embedded way',
     author='RavenDB',
     author_email='support@ravendb.net',
