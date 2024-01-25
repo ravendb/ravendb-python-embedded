@@ -1,7 +1,7 @@
 ========
 Overview
 ========
-Pyravendb-Embedded is a RavenDB  package for running RavenDB in embedded mode.
+Ravendb-Embedded is a RavenDB  package for running RavenDB in embedded mode.
 
 .. code-block:: python
 
@@ -14,13 +14,13 @@ Pyravendb-Embedded is a RavenDB  package for running RavenDB in embedded mode.
 ============
 Installation
 ============
-Install from `PyPi <https://pypi.python.org/pypi>`_, as `pyravendb-embedded_ <https://pypi.python.org/project/pyravendb-embedded>`_.
+Install from `PyPi <https://pypi.python.org/pypi>`_, as `ravendb-embedded_ <https://pypi.python.org/project/ravendb-embedded>`_.
 
 .. code-block:: bash
 
     pip install pyravendb
 
-Install Pyravendb-Embedded from pip will provide you with a copy of RavenDB server binaries files as well
+Install Ravendb-Embedded from pip will provide you with a copy of RavenDB server binaries files as well.
 
 ========
 Usage
@@ -42,7 +42,7 @@ ServerOptions
 * **server_url** - The url the server will be opened if None the server will open on local host.
 * **dotnet_path** - Where dotnet.exe is located if dotnet in the PATH nothing needed here (If .net core is not installed in your machine
                     you can download `dotnet binaries <https://www.microsoft.com/net/download/windows>`_ and just put the path to it)
-* **command_line_args** - A list of all `server command args <https://ravendb.net/docs/article-page/4.0/csharp/server/configuration/command-line-arguments>`_.
+* **command_line_args** - A list of all `server command args <https://ravendb.net/docs/article-page/6.0/csharp/server/configuration/command-line-arguments>`_.
 
 .. code-block:: python
 
@@ -51,27 +51,10 @@ ServerOptions
 
 Security
 --------
-There are two options to make ravendb secured in Pyravendb-Embedded:
+There are two options to make ravendb secured in Ravendb-Embedded:
 
-1. ``secured(certificate_path, certificate_password=None)`` - For this option you will put a path to a .pfx file for the server and a password to the file if you have one.
-
-        .. code-block:: python
-
-            server_options = ServerOptions()
-            server_options.secured("PATH_TO_PFX_CERT_FILE", "PASSWORD_TO_CERT_FILE")
-            EmbeddedServer.start_server(server_options)
-
-2. ``secured_with_exec(self, cert_exec, cert_exec_args, server_cert_fingerprint, client_cert_path, client_cert_password=None)`` - For this option you will have to put executable program (ex. powershell, python, etc) and the arguments for him, the fingerprint of the cert file you can use pyravendb Utils for that (see get_cert_file_fingerprint method), the client cert path and the password if you have one.
-
-    .. code-block:: python
-
-        server_options = ServerOptions()
-        sserver_options.secured_with_exec("powershell",
-                                         "C:\\secrets\\give_me_cert.ps1",
-                                         Utils.get_cert_file_fingerprint("PATH_TO_PEM_CERT_FILE"),
-                                         "PATH_TO_PEM_CERT_FILE")
-        EmbeddedServer.start_server(server_options)
-
+1. `secured(server_pfx_certificate_path, client_pem_certificate_path, server_pfx_certificate_password=None, ca_certificate_path)` - For this option you will put path to a .pfx and .pem files and a password/ca cert
+if you have one.
 
 Get Document Store
 ----------------------
