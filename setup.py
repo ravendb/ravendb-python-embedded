@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="pyravendb-embedded",
+    name="ravendb-embedded",
     packages=find_packages(),
     long_description=open("README.rst").read(),
     version="6.0.0",
