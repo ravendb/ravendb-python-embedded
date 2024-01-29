@@ -33,7 +33,7 @@ class EmbeddedServer:
         return cls._INSTANCE
 
     def __init__(self):
-        if hasattr(self, 'initialized'):
+        if hasattr(self, "initialized"):
             return
         self.initialized = True
         self.server_task: Optional[Lazy[Tuple[str, subprocess.Popen]]] = None
@@ -43,6 +43,12 @@ class EmbeddedServer:
         self._graceful_shutdown_timeout: Optional[timedelta] = None
         self.INSTANCE = self
         self.logger = logging.Logger(self.__class__.__name__, logging.DEBUG)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def _log_debug(self, message: str) -> None:
         if not self.logger.disabled and self.logger.isEnabledFor(logging.DEBUG):

@@ -21,7 +21,7 @@ class CopyServerProvider(ProvideRavenDBServer):
         shutil.copytree(self.server_files, target_directory)
 
 
-class CopyServerFromNugetProvider(ProvideRavenDBServer):
+class CopyServerFromNugetProvider(CopyServerProvider):
     SERVER_FILES = "target/nuget/contentFiles/any/any/RavenDBServer"
 
     def __init__(self):
