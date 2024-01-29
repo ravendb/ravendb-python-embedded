@@ -1,2 +1,2 @@
-graft ravendb-server
+include ravendb_embedded/ravendb_server/server.zip
 include README.rst

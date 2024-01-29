@@ -1,7 +1,7 @@
 ========
 Overview
 ========
-Ravendb-Embedded is a RavenDB  package for running RavenDB in embedded mode.
+ravendb-embedded is a RavenDB  package for running RavenDB in embedded mode.
 
 .. code-block:: python
 
@@ -18,9 +18,9 @@ Install from `PyPi <https://pypi.python.org/pypi>`_, as `ravendb-embedded_ <http
 
 .. code-block:: bash
 
-    pip install pyravendb
+    pip install ravendb
 
-Install Ravendb-Embedded from pip will provide you with a copy of RavenDB server binaries files as well.
+Install ravendb-embedded from pip will provide you with a copy of RavenDB server binaries files as well.
 
 ========
 Usage
@@ -51,7 +51,7 @@ ServerOptions
 
 Security
 --------
-There are two options to make ravendb secured in Ravendb-Embedded:
+There are two options to make ravendb secured in ravendb-embedded:
 
 1. `secured(server_pfx_certificate_path, client_pem_certificate_path, server_pfx_certificate_password=None, ca_certificate_path)` - For this option you will put path to a .pfx and .pem files and a password/ca cert
 if you have one.
@@ -84,7 +84,7 @@ DatabaseOptions
 
 Open the RavenDB studio in the browser
 --------------------------------------------
-To open RavenDB studio from Pyravendb-Embedded you can use ``open_studio_in_browser`` method and the studio will open automatically
+To open RavenDB studio from ravendb-embedded you can use ``open_studio_in_browser`` method and the studio will open automatically
 one your default browser.
 
 .. code-block:: python

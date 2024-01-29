@@ -55,7 +55,7 @@ class ExtractFromZipServerProvider(ProvideRavenDBServer):
 
 class ExtractFromPkgResourceServerProvider(ProvideRavenDBServer):
     def provide(self, target_directory):
-        resource_name = "/ravendb-server.zip"
+        resource_name = "/ravendb_server.zip"
 
         # Get binary data from the resource
         resource_data = pkgutil.get_data(self.__class__.__module__, resource_name)

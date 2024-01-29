@@ -15,7 +15,6 @@ import webbrowser
 from ravendb import DocumentStore, CreateDatabaseOperation
 from ravendb.exceptions.raven_exceptions import RavenException
 from ravendb.tools.utils import Stopwatch
-
 from ravendb_embedded.options import ServerOptions, DatabaseOptions
 from ravendb_embedded.raven_server_runner import RavenServerRunner
 

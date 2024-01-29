@@ -1,9 +1,9 @@
 
 ## Overview
-Pyravendb-Embedded is a RavenDB  package for running RavenDB in embedded mode.
+ravendb-embedded is a RavenDB  package for running RavenDB in embedded mode.
 
 ```python
-from ravendb_embedded.embedded_server import EmbeddedServer
+from ravendb_embedded .embedded_server import EmbeddedServer
 
 EmbeddedServer().start_server()
 with EmbeddedServer().get_document_store("Embedded") as store:
@@ -13,11 +13,11 @@ with EmbeddedServer().get_document_store("Embedded") as store:
 ``` 
 
 ## Installation
-Install from [PyPi](https://pypi.python.org/pypi), as [pyravendb-embedded](https://pypi.python.org/project/ravendb-embedded).
+Install from [PyPi](https://pypi.python.org/pypi), as [ravendb-embedded](https://pypi.python.org/project/ravendb-embedded).
 ```bash
-pip install ravendb-embedded
+pip install ravendb_embedded
 ```
-Install Ravendb-Embedded from pip will provide you with a copy of RavenDB server binaries files as well.
+Install ravendb-embedded from pip will provide you with a copy of RavenDB server binaries files as well.
 
 ## Usage
 #### Start a server
@@ -34,19 +34,19 @@ To be more in control about your server `start_server` method can take one param
 you can download [dotnet binaries](https://www.microsoft.com/net/download/windows) and just put the path to it)
 * **command_line_args** - A list of all [server command args](https://ravendb.net/docs/article-page/6.0/csharp/server/configuration/command-line-arguments).
 ```python
-from ravendb_embedded.options import ServerOptions
-from ravendb_embedded.embedded_server import EmbeddedServer
+from ravendb_embedded .options import ServerOptions
+from ravendb_embedded .embedded_server import EmbeddedServer
 
 server_options = ServerOptions(data_directory="MYPATH/RavenDBDataDir")
 EmbeddedServer().start_server(server_options)
 ```
 ##### Security
-There are options to make ravendb secured in Ravendb-Embedded:<br />
+There are options to make ravendb secured in ravendb-embedded:<br />
 1) `secured(server_pfx_certificate_path, client_pem_certificate_path, server_pfx_certificate_password=None, ca_certificate_path)` - For this option you will put path to a .pfx and .pem files and a password/ca cert
 if you have one.
     ```python
-    from ravendb_embedded.options import ServerOptions
-    from ravendb_embedded.embedded_server import EmbeddedServer
+    from ravendb_embedded .options import ServerOptions
+    from ravendb_embedded .embedded_server import EmbeddedServer
    
     server_options = ServerOptions()
     server_options.secured("PATH_TO_PFX_CERT_FILE", "PASSWORD_TO_CERT_FILE")
@@ -82,7 +82,7 @@ After initialize and start the server we can use `get_document_store` method to 
 and start work with RavenDB as normal.
 
 ```python
-from ravendb_embedded.embedded_server import EmbeddedServer
+from ravendb_embedded .embedded_server import EmbeddedServer
 
 EmbeddedServer().start_server()
 with EmbeddedServer().get_document_store("Test") as store:
@@ -96,8 +96,8 @@ if this option if True we won't create the database (Default False).
 
 ```python
 # In this example we won't create the Test database if not exists will raise an exception
-from ravendb_embedded.options import DatabaseOptions
-from ravendb_embedded.embedded_server import EmbeddedServer
+from ravendb_embedded .options import DatabaseOptions
+from ravendb_embedded .embedded_server import EmbeddedServer
 
 database_options = DatabaseOptions.from_database_name("Test")
 database_options.skip_creating_database=True
@@ -106,11 +106,11 @@ with EmbeddedServer().get_document_store_from_options(database_options) as store
 ```
 
 #### Open RavenDB studio in the browser
-To open RavenDB studio from Pyravendb-Embedded you can use `open_studio_in_browser` method and the studio will open automatically
+To open RavenDB studio from ravendb-embedded you can use `open_studio_in_browser` method and the studio will open automatically
 one your default browser.
 
 ```python
-from ravendb_embedded.embedded_server import EmbeddedServer
+from ravendb_embedded .embedded_server import EmbeddedServer
 
 EmbeddedServer().open_studio_in_browser()
 ```

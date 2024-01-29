@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, find_namespace_packages
 from setuptools.command.install import install
 from setuptools.command.develop import develop
 import os
@@ -8,8 +8,8 @@ from tqdm import tqdm
 # Modify the RavenDB version and download URL accordingly
 RAVENDB_VERSION = "6.0.0"
 RAVENDB_DOWNLOAD_URL = f"https://www.nuget.org/api/v2/package/RavenDB.Embedded/{RAVENDB_VERSION}"
-RAVENDB_DOWNLOAD_FOLDER = "downloaded_ravendb"
-RAVENDB_FULL_DOWNLOAD_PATH = os.path.join(RAVENDB_DOWNLOAD_FOLDER, "ravendb-server")
+RAVENDB_DOWNLOAD_FOLDER = "ravendb_embedded/ravendb_server"
+RAVENDB_FULL_DOWNLOAD_PATH = os.path.join(RAVENDB_DOWNLOAD_FOLDER, "server.zip")
 
 
 # Function to download RavenDB with progress bar
@@ -17,11 +17,11 @@ def download_ravendb_with_progress():
     os.makedirs(RAVENDB_DOWNLOAD_FOLDER, exist_ok=True)
 
     response = urllib.request.urlopen(RAVENDB_DOWNLOAD_URL)
-    total_size = int(response.headers.get("content-length", 0))
+    total_size = int(response.headers.get('content-length', 0))
     block_size = 1024  # Adjust the block size as needed
-    progress_bar = tqdm(total=total_size, unit="B", unit_scale=True)
+    progress_bar = tqdm(total=total_size, unit='B', unit_scale=True)
 
-    with open(RAVENDB_FULL_DOWNLOAD_PATH, "wb") as file, progress_bar:
+    with open(RAVENDB_FULL_DOWNLOAD_PATH, 'wb') as file, progress_bar:
         while True:
             buffer = response.read(block_size)
             if not buffer:
@@ -47,8 +47,12 @@ class CustomDevelop(develop):
 
 # Setup configuration
 setup(
+    cmdclass={"install": CustomInstall, "develop": CustomDevelop},
     name="ravendb-embedded",
-    packages=find_packages(),
+    packages=["ravendb-embedded"],
+    package_dir={"ravendb-embedded": "ravendb_embedded"},
+    package_data={"ravendb-embedded.data" : ["ravendb_embedded/server.zip"]},
+    include_package_data=True,
     long_description=open("README.rst").read(),
     version=RAVENDB_VERSION,
     description="RavenDB Embedded library to run RavenDB in an embedded way",
@@ -58,8 +62,5 @@ setup(
     license="Custom EULA",
     keywords="ravendb embedded database nosql doc db",
     install_requires=[],
-    include_package_data=True,
     zip_safe=False,
-    package_data={"": ["ravendb-server/*"]},
-    cmdclass={"install": CustomInstall, "develop": CustomDevelop},
 )
