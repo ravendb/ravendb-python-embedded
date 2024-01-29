@@ -1,2 +1,2 @@
-recursive-include ravendb_embedded/RavenDBServer *
+graft ravendb-server
 include README.rst
