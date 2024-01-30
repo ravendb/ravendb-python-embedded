@@ -28,9 +28,22 @@ class RavenServerRunner:
         if not options.logs_path.strip():
             raise ValueError("logs_path cannot be None or whitespace")
 
-        server_dll_path = os.path.join(options.target_server_location, "Raven.Server.dll")
-        if not os.path.exists(server_dll_path):
-            raise RavenException("Server file was not found: " + server_dll_path)
+        server_paths = [
+            "Raven.Server.dll",
+            "Server/Raven.Server.dll",
+            "contentFiles/any/any/RavenDBServer/Raven.Server.dll",
+        ]
+
+        server_dll_path = None
+
+        for path in server_paths:
+            full_path = os.path.join(options.target_server_location, path)
+            if os.path.exists(full_path):
+                server_dll_path = full_path
+                break
+
+        if server_dll_path is None:
+            raise RavenException("Server file was not found in any of the expected locations.")
 
         if not options.dot_net_path.strip():
             raise ValueError("dot_net_path cannot be None or whitespace")

@@ -17,7 +17,7 @@ class CopyServerProvider(ProvideRavenDBServer):
     def __init__(self, server_files: str):
         self.server_files = server_files
 
-    def provide(self, target_directory: str) -> None:  # todo: test
+    def provide(self, target_directory: str) -> None:
         shutil.copytree(self.server_files, target_directory, dirs_exist_ok=True)
 
 
@@ -55,7 +55,7 @@ class ExtractFromZipServerProvider(ProvideRavenDBServer):
 
 class ExtractFromPkgResourceServerProvider(ProvideRavenDBServer):
     def provide(self, target_directory):
-        resource_name = "/ravendb_server.zip"
+        resource_name = "ravendb_server.zip"
 
         # Get binary data from the resource
         resource_data = pkgutil.get_data(self.__class__.__module__, resource_name)
@@ -87,7 +87,7 @@ class ExternalServerProvider(ProvideRavenDBServer):
 
         # Alternatively, it might be a directory - look for Raven.Server.exe inside
         if os.path.isdir(file_server_location) and os.path.exists(
-            os.path.join(file_server_location, "Raven.Server.exe")
+            os.path.join(file_server_location, self.SERVER_DLL_FILENAME)
         ):
             self.inner_provider = CopyServerProvider(server_location)
             return
