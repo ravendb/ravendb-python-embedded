@@ -89,17 +89,16 @@ class RavenServerRunner:
         else:
             options.server_url = options.server_url or "http://127.0.0.1:0"
 
-        command_line_args.extend(
-            [f"--ServerUrl={options.server_url}", CommandLineArgumentEscaper.escape_single_arg(server_dll_path)]
-        )
+        command_line_args.extend([f"--ServerUrl={options.server_url}"])
+
+        command_line_args[:0] = options.command_line_args
+        command_line_args.insert(0, server_dll_path)
+        command_line_args.insert(0, options.dot_net_path)
 
         if options.framework_version:
             framework_version = RuntimeFrameworkVersionMatcher.match(options)
-            command_line_args[:0] = ["--fx-version", framework_version]
-
-        command_line_args[:0] = options.command_line_args
-
-        command_line_args[:0] = [options.dot_net_path]
+            command_line_args.insert(1, framework_version)
+            command_line_args.insert(1, "--fx-version")
 
         process_builder = subprocess.Popen(command_line_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         process = process_builder

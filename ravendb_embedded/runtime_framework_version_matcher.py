@@ -55,42 +55,37 @@ class RuntimeFrameworkVersionMatcher:
             raise RuntimeError("Dotnet path is not provided.")
 
         process_command = [options.dot_net_path, "--info"]
-        process = None
+        runtimes = []
 
         try:
-            process = subprocess.Popen(process_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            with subprocess.Popen(
+                process_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            ) as process:
+                inside_runtimes = False
+                runtime_lines = []
 
-            inside_runtimes = False
-            runtime_lines = []
+                for line in process.stdout:
+                    line = line.strip()
+                    if line.startswith(".NET runtimes installed:") or line.startswith(".NET Core runtimes installed:"):
+                        inside_runtimes = True
+                        continue
+                    if inside_runtimes and line.startswith("Microsoft.NETCore.App"):
+                        runtime_lines.append(line)
 
-            for line in process.stdout:
-                line = line.strip()
-
-                if line.startswith(".NET runtimes installed:") or line.startswith(".NET Core runtimes installed:"):
-                    inside_runtimes = True
-                    continue
-
-                if inside_runtimes and line.startswith("Microsoft.NETCore.App"):
-                    runtime_lines.append(line)
-
-            runtimes = []
-            for runtime_line in runtime_lines:
-                values = runtime_line.split(" ")
-                if len(values) < 2:
-                    raise RuntimeError(
-                        f"Invalid runtime line. Expected 'Microsoft.NETCore.App x.x.x', but was '{runtime_line}'"
-                    )
-
-                runtimes.append(RuntimeFrameworkVersion(values[1]))
-
-            return runtimes
+                for runtime_line in runtime_lines:
+                    values = runtime_line.split(" ")
+                    if len(values) < 2:
+                        raise RuntimeError(
+                            f"Invalid runtime line. Expected 'Microsoft.NETCore.App x.x.x', but was '{runtime_line}'"
+                        )
+                    runtimes.append(RuntimeFrameworkVersion(values[1]))
 
         except Exception as e:
             raise RuntimeError("Unable to execute dotnet to retrieve list of installed runtimes") from e
-
         finally:
             if process:
                 process.kill()
+        return runtimes
 
 
 class RuntimeFrameworkVersion:

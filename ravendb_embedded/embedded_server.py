@@ -60,7 +60,7 @@ class EmbeddedServer:
 
         start_server = Lazy(lambda: self._run_server(options))
 
-        if self.server_task and self.server_task != start_server:
+        if self.server_task and self.server_task.created and self.server_task != start_server:
             raise RuntimeError("The server was already started")
 
         self.server_task = start_server
@@ -106,9 +106,9 @@ class EmbeddedServer:
     def _try_create_database(self, options: DatabaseOptions, store: DocumentStore) -> None:
         try:
             store.maintenance.server.send(CreateDatabaseOperation(options.database_record))
-        except RuntimeError as e:
+        except Exception as e:
             # Expected behavior when the database already exists
-            if "Already exists" in e.args[0]:  # todo: test
+            if "conflict" in e.args[0]:  # todo: change exc type when python client will implement conflict handling
                 self._log_debug(f"{options.database_record.database_name} already exists.")
             else:
                 raise e
@@ -289,10 +289,11 @@ class EmbeddedServer:
         self._shutdown_server_process(process)
 
         for key, value in self.document_stores.items():
-            if value.is_value_created():
+            if value.created:
                 value.get_value().close()
 
         self.document_stores.clear()
+        self.server_task = None
 
 
 class Lazy(Generic[_T]):

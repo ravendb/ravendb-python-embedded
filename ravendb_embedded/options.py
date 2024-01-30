@@ -15,7 +15,7 @@ class DatabaseOptions:
     def __init__(self, database_record: DatabaseRecord):
         self.database_record = database_record
         self.skip_creating_database: Optional[bool] = False
-        self.conventions: Optional[DocumentConventions] = None
+        self.conventions: DocumentConventions = DocumentConventions()
 
     @classmethod
     def from_database_name(cls, database_name: str) -> DatabaseOptions:
@@ -38,8 +38,8 @@ class ServerOptions:
 
     def __init__(self):
         self.framework_version: str = "7.0.15+"
-        self.logs_path: str = self.BASE_DIRECTORY + "RavenDB/Logs"
-        self.data_directory: str = self.BASE_DIRECTORY + "RavenDB"
+        self.logs_path: str = self.BASE_DIRECTORY + "/RavenDB/Logs"
+        self.data_directory: str = self.BASE_DIRECTORY + "/RavenDB"
         self.provider: ProvideRavenDBServer = ExtractFromPkgResourceServerProvider()
         self.target_server_location: str = self.DEFAULT_SERVER_LOCATION
         self.dot_net_path: str = "dotnet"

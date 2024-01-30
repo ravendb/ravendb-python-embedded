@@ -18,7 +18,7 @@ class CopyServerProvider(ProvideRavenDBServer):
         self.server_files = server_files
 
     def provide(self, target_directory: str) -> None:  # todo: test
-        shutil.copytree(self.server_files, target_directory)
+        shutil.copytree(self.server_files, target_directory, dirs_exist_ok=True)
 
 
 class CopyServerFromNugetProvider(CopyServerProvider):
@@ -31,7 +31,7 @@ class CopyServerFromNugetProvider(CopyServerProvider):
         if not os.path.exists("target"):
             raise RuntimeError(
                 f"Unable to find 'target' directory in the current working directory ({os.path.abspath('.')}). "
-                f"Please make sure you execute the test in the root project directory with the pom.xml file."
+                f"Please make sure you execute the test in the ravendb_embedded directory with the provide.py file."
             )
 
         super().provide(target_directory)

@@ -2,7 +2,7 @@
 /test.py
 /dist
 /ravendb-embedded.egg-info
-/ravendb_embedded/ravendb_server
+/ravendb_embedded/target
 *.pyc
 *.log
 *.raven-topology

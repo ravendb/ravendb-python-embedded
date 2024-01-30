@@ -1,2 +1,2 @@
-include ravendb_embedded/ravendb_server/server.zip
+graft ravendb_embedded/target/nuget
 include README.rst
