@@ -206,13 +206,13 @@ class RuntimeFrameworkVersion:
             raise ValueError(f"Illegal matching type: {matching_type}")
 
     def match(self, version: RuntimeFrameworkVersion) -> bool:
-        if hasattr(self, "major") and self.major != version.major:
+        if self.major is not None and self.major != version.major:
             return False
 
-        if hasattr(self, "minor") and self.minor != version.minor:
+        if self.minor is not None and self.minor != version.minor:
             return False
 
-        if hasattr(self, "patch"):
+        if self.patch is not None:
             if self.patch_matching_type == MatchingType.EQUAL and self.patch != version.patch:
                 return False
             elif self.patch_matching_type == MatchingType.GREATER_OR_EQUAL and self.patch > version.patch:

@@ -65,7 +65,7 @@ class CustomSDist(sdist):
 
 # Setup configuration
 setup(
-    python_requires='>=3.8',
+    python_requires=">=3.8",
     cmdclass={"install": CustomInstall, "develop": CustomDevelop, "sdist": CustomSDist},
     name="ravendb-embedded",
     packages=["ravendb-embedded"],
