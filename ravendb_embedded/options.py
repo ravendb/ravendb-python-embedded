@@ -27,7 +27,7 @@ class SecurityOptions:
         self.server_pfx_certificate_path: Optional[str] = None
         self.server_pfx_certificate_password: Optional[str] = None
         self.client_pem_certificate_path: Optional[str] = None
-        self.trust_store_path: Optional[str] = None
+        self.ca_certificate_path: Optional[str] = None
         self.certificate_exec: Optional[str] = None
         self.certificate_arguments: Optional[str] = None
 

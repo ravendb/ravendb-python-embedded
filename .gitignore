@@ -1,7 +1,7 @@
 /.idea
 /test.py
 /dist
-/ravendb-embedded.egg-info
+/ravendb_embedded.egg-info
 /ravendb_embedded/target
 *.pyc
 *.log

@@ -67,7 +67,7 @@ class EmbeddedServer:
 
         if options.security is not None:
             self.client_pem_certificate_path = options.security.client_pem_certificate_path
-            self.trust_store_path = options.security.trust_store_path
+            self.trust_store_path = options.security.ca_certificate_path
 
         start_server.get_value()
 
@@ -78,8 +78,9 @@ class EmbeddedServer:
         server_url = self.get_server_uri()
 
         store = DocumentStore(server_url, database_name)
-        store.certificate = self.client_pem_certificate_path
-        store.trust_store = self.trust_store_path
+        if self.client_pem_certificate_path:
+            store.certificate_pem_path = self.client_pem_certificate_path
+        store.trust_store_path = self.trust_store_path
         store.conventions = options.conventions
 
         store.add_after_close(lambda: self.document_stores.pop(database_name))

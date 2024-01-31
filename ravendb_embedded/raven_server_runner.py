@@ -85,7 +85,6 @@ class RavenServerRunner:
                         f"{CommandLineArgumentEscaper.escape_single_arg(options.security.certificate_arguments)}",
                     ]
                 )
-            # todo : test this case
             if options.security.client_pem_certificate_path:
                 with open(options.security.client_pem_certificate_path, "rb") as cert_file:
                     cert_data = cert_file.read()
