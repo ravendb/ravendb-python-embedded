@@ -1,2 +1,3 @@
 graft ravendb_embedded/target/nuget
 include README.rst
+recursive-exclude tests *

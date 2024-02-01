@@ -7,7 +7,9 @@ from cryptography.hazmat.primitives import hashes
 from ravendb.exceptions.raven_exceptions import RavenException
 
 from ravendb_embedded.options import ServerOptions
-from ravendb_embedded.runtime_framework_version_matcher import RuntimeFrameworkVersionMatcher
+from ravendb_embedded.runtime_framework_version_matcher import (
+    RuntimeFrameworkVersionMatcher,
+)
 
 
 class CommandLineArgumentEscaper:
@@ -43,7 +45,9 @@ class RavenServerRunner:
                 break
 
         if server_dll_path is None:
-            raise RavenException("Server file was not found in any of the expected locations.")
+            raise RavenException(
+                "Server file was not found in any of the expected locations."
+            )
 
         if not options.dot_net_path.strip():
             raise ValueError("dot_net_path cannot be None or whitespace")
@@ -86,7 +90,9 @@ class RavenServerRunner:
                     ]
                 )
             if options.security.client_pem_certificate_path:
-                with open(options.security.client_pem_certificate_path, "rb") as cert_file:
+                with open(
+                    options.security.client_pem_certificate_path, "rb"
+                ) as cert_file:
                     cert_data = cert_file.read()
 
                 cert = x509.load_pem_x509_certificate(cert_data, default_backend())
@@ -112,7 +118,9 @@ class RavenServerRunner:
             command_line_args.insert(1, framework_version)
             command_line_args.insert(1, "--fx-version")
 
-        process_builder = subprocess.Popen(command_line_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process_builder = subprocess.Popen(
+            command_line_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         process = process_builder
 
         return process

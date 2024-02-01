@@ -60,19 +60,27 @@ class EmbeddedServer:
 
         start_server = Lazy(lambda: self._run_server(options))
 
-        if self.server_task and self.server_task.created and self.server_task != start_server:
+        if (
+            self.server_task
+            and self.server_task.created
+            and self.server_task != start_server
+        ):
             raise RuntimeError("The server was already started")
 
         self.server_task = start_server
 
         if options.security is not None:
-            self.client_pem_certificate_path = options.security.client_pem_certificate_path
+            self.client_pem_certificate_path = (
+                options.security.client_pem_certificate_path
+            )
             self.trust_store_path = options.security.ca_certificate_path
 
         start_server.get_value()
 
     def get_document_store(self, database: str) -> DocumentStore:
-        return self.get_document_store_from_options(DatabaseOptions.from_database_name(database))
+        return self.get_document_store_from_options(
+            DatabaseOptions.from_database_name(database)
+        )
 
     def _initialize_document_store(self, database_name, options):
         server_url = self.get_server_uri()
@@ -92,7 +100,9 @@ class EmbeddedServer:
 
         return store
 
-    def get_document_store_from_options(self, options: DatabaseOptions) -> DocumentStore:
+    def get_document_store_from_options(
+        self, options: DatabaseOptions
+    ) -> DocumentStore:
         database_name = options.database_record.database_name
 
         if not database_name or database_name.isspace():
@@ -104,20 +114,30 @@ class EmbeddedServer:
 
         return self.document_stores.setdefault(database_name, lazy).get_value()
 
-    def _try_create_database(self, options: DatabaseOptions, store: DocumentStore) -> None:
+    def _try_create_database(
+        self, options: DatabaseOptions, store: DocumentStore
+    ) -> None:
         try:
-            store.maintenance.server.send(CreateDatabaseOperation(options.database_record))
+            store.maintenance.server.send(
+                CreateDatabaseOperation(options.database_record)
+            )
         except Exception as e:
             # Expected behavior when the database already exists
-            if "conflict" in e.args[0]:  # todo: change exc type when python client will implement conflict handling
-                self._log_debug(f"{options.database_record.database_name} already exists.")
+            if (
+                "conflict" in e.args[0]
+            ):  # todo: change exc type when python client will implement conflict handling
+                self._log_debug(
+                    f"{options.database_record.database_name} already exists."
+                )
             else:
                 raise e
 
     def get_server_uri(self) -> str:
         server = self.server_task
         if server is None:
-            raise RuntimeError("Please run start_server() before trying to use the server.")
+            raise RuntimeError(
+                "Please run start_server() before trying to use the server."
+            )
 
         return server.get_value()[0]
 
@@ -126,7 +146,9 @@ class EmbeddedServer:
             return
 
         with process:
-            if process.poll() is not None:  # Check if the process has already terminated
+            if (
+                process.poll() is not None
+            ):  # Check if the process has already terminated
                 return
 
             try:
@@ -172,13 +194,19 @@ class EmbeddedServer:
             process.stdout,
             startup_duration,
             options,
-            lambda line, builder: self.online(line, builder, url_ref, process, startup_duration, options),
+            lambda line, builder: self.online(
+                line, builder, url_ref, process, startup_duration, options
+            ),
         )
 
         if url_ref["value"] is None:
-            error_string = self.read_output(process.stderr, startup_duration, options, None)
+            error_string = self.read_output(
+                process.stderr, startup_duration, options, None
+            )
             self._shutdown_server_process(process)
-            raise RuntimeError(self.build_startup_exception_message(output_string, error_string))
+            raise RuntimeError(
+                self.build_startup_exception_message(output_string, error_string)
+            )
 
         return url_ref["value"], process
 
@@ -210,9 +238,13 @@ class EmbeddedServer:
         options: ServerOptions,
     ):
         if line is None:
-            error_string = self.read_output(process.stderr, startup_duration, options, None)
+            error_string = self.read_output(
+                process.stderr, startup_duration, options, None
+            )
             self._shutdown_server_process(process)
-            raise RuntimeError(self.build_startup_exception_message("".join(builder), error_string))
+            raise RuntimeError(
+                self.build_startup_exception_message("".join(builder), error_string)
+            )
 
         prefix = "Server available on: "
         if line.startswith(prefix):
@@ -234,7 +266,11 @@ class EmbeddedServer:
                     line_ = output_queue.get_nowait()
                     return line_
                 except queue.Empty:
-                    if options.max_server_startup_time_duration - startup_duration.elapsed() <= timedelta(seconds=0):
+                    if (
+                        options.max_server_startup_time_duration
+                        - startup_duration.elapsed()
+                        <= timedelta(seconds=0)
+                    ):
                         return None
                     time.sleep(1)
 

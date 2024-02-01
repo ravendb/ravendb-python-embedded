@@ -8,7 +8,11 @@ from ravendb.documents.conventions import DocumentConventions
 from ravendb.exceptions.raven_exceptions import RavenException
 from ravendb.serverwide.database_record import DatabaseRecord
 
-from ravendb_embedded.provide import ProvideRavenDBServer, ExtractFromPkgResourceServerProvider, ExternalServerProvider
+from ravendb_embedded.provide import (
+    ProvideRavenDBServer,
+    ExtractFromPkgResourceServerProvider,
+    ExternalServerProvider,
+)
 
 
 class DatabaseOptions:
@@ -72,12 +76,16 @@ class ServerOptions:
             raise ValueError("certificate cannot be None")
 
         if self.security is not None:
-            raise RuntimeError("The security has already been set up for this ServerOptions object")
+            raise RuntimeError(
+                "The security has already been set up for this ServerOptions object"
+            )
 
         try:
             self.security = SecurityOptions()
             self.security.server_pfx_certificate_path = server_pfx_certificate_path
-            self.security.server_pfx_certificate_password = server_pfx_certificate_password
+            self.security.server_pfx_certificate_password = (
+                server_pfx_certificate_password
+            )
             self.security.client_pem_certificate_path = client_pem_certificate_path
             if ca_certificate_path:
                 self.security.ca_certificate_path = ca_certificate_path
