@@ -18,7 +18,10 @@ class CopyServerProvider(ProvideRavenDBServer):
         self.server_files = server_files
 
     def provide(self, target_directory: str) -> None:
-        shutil.copytree(self.server_files, target_directory, dirs_exist_ok=True)
+        try:
+            shutil.copytree(self.server_files, target_directory)
+        except FileExistsError:
+            pass
 
 
 class CopyServerFromNugetProvider(CopyServerProvider):

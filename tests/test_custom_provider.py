@@ -24,7 +24,7 @@ class TestCustomProvider(TestCase):
             with EmbeddedServer() as embedded:
                 server_options = ServerOptions()
                 server_options = self.configure_server_options(temp_dir, server_options)
-                server_options.with_external_server("target/ravendb-server.zip")
+                server_options.with_external_server("ravendb_embedded/target/ravendb-server.zip")
                 embedded.start_server(server_options)
 
                 database_options = DatabaseOptions.from_database_name("Test")

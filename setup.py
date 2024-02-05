@@ -40,14 +40,14 @@ class CustomSDist(sdist):
 
 
 setup(
-    python_requires=">=3.8",
+    python_requires=">=3.7",
     cmdclass={"sdist": CustomSDist},
     name="ravendb-embedded",
     packages=["ravendb_embedded"],
     package_dir={"ravendb_embedded": "ravendb_embedded"},
     include_package_data=True,
     long_description=open("README.rst").read(),
-    version=RAVENDB_VERSION,
+    version="6.0.2.post2",
     description="RavenDB Embedded library to run RavenDB in an embedded way",
     author="RavenDB",
     author_email="support@ravendb.net",
@@ -55,7 +55,6 @@ setup(
     license="Custom EULA",
     keywords="ravendb embedded database nosql doc db",
     install_requires=[
-        "setuptools~=68.2.0",
         "ravendb>=5.2.4",
         "cryptography~=42.0.0",
     ],
