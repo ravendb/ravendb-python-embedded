@@ -1,7 +1,8 @@
 ========
 Overview
 ========
-ravendb-embedded is a RavenDB  package for running RavenDB in embedded mode.
+
+``ravendb-embedded`` is a RavenDB package for running RavenDB in embedded mode.
 
 .. code-block:: python
 
@@ -14,35 +15,38 @@ ravendb-embedded is a RavenDB  package for running RavenDB in embedded mode.
 ============
 Installation
 ============
-Install from `PyPi <https://pypi.python.org/pypi>`_, as `ravendb-embedded <https://pypi.python.org/project/ravendb-embedded>`_.
+
+Install ``ravendb-embedded`` from `PyPi <https://pypi.python.org/pypi>`_ using:
 
 .. code-block:: bash
 
     pip install ravendb-embedded
 
-Install ravendb-embedded from pip will provide you with a copy of RavenDB server binaries files as well.
+Installing ``ravendb-embedded`` from pip will also provide you with a copy of the RavenDB server binary files.
 
 ========
 Usage
 ========
+
 Start a server
 --------------
-To start RavenDB server, call `start_server()` method from `EmbeddedServer` instance.
+
+To start the RavenDB server, call the ``start_server()`` method from an ``EmbeddedServer`` instance.
 
 .. code-block:: python
 
-   EmbeddedServer.start_server()
+    EmbeddedServer.start_server()
 
-To be more in control about your server `start_server` method can take `server_options`.
+For more control over your server, you can pass ``server_options`` to the ``start_server()`` method.
 
 ServerOptions
 -------------
-* **framework_version** - The framework version to run the server with.
-* **data_directory** - Where to save the database data (if None the files will be saved in RavenDB folder in the base folder).
-* **server_url** - The url the server will be opened if None the server will open on local host.
-* **dotnet_path** - Where dotnet.exe is located if dotnet in the PATH nothing needed here (If .net core is not installed in your machine
-                    you can download `dotnet binaries <https://www.microsoft.com/net/download/windows>`_ and just put the path to it)
-* **command_line_args** - A list of all `server command args <https://ravendb.net/docs/article-page/6.0/csharp/server/configuration/command-line-arguments>`_.
+
+- ``framework_version``: The framework version to run the server with.
+- ``data_directory``: Where to save the database data (if None, the files will be saved in the RavenDB folder in the base folder).
+- ``server_url``: The URL the server will be opened on (if None, the server will open on localhost).
+- ``dotnet_path``: The location of ``dotnet.exe`` (if .NET Core is not installed on your machine, you can download `dotnet binaries <https://www.microsoft.com/net/download/windows>`_ and provide the path).
+- ``command_line_args``: A list of all `server command arguments <https://ravendb.net/docs/article-page/6.0/csharp/server/configuration/command-line-arguments>`_.
 
 .. code-block:: python
 
@@ -51,26 +55,30 @@ ServerOptions
 
 Security
 --------
-There are options to make ravendb secured in ravendb-embedded:<br />
 
-`secured(server_pfx_certificate_path, client_pem_certificate_path, server_pfx_certificate_password=None, ca_certificate_path = None)`
+You can secure ``ravendb-embedded`` using the ``secured()`` method:
 
-- For this option you will put path to a .pfx and .pem files and a password/ca cert if you have one.
-- Server certificate password and CA cert file are optional arguments. Minimal setup requires both .pfx server and .pem client certificates.
+.. code-block:: python
 
+    secured(server_pfx_certificate_path, client_pem_certificate_path, server_pfx_certificate_password=None, ca_certificate_path=None)
+
+- Provide the path to ``.pfx`` and ``.pem`` files, and optionally a password and CA certificate file.
+- Minimal setup requires both a ``.pfx`` server and a ``.pem`` client certificate.
 
 Get Document Store
-----------------------
-After initialize and start the server we can use ``get_document_store`` method to be able to get a DocumentStore
-and start work with RavenDB as normal.
+------------------
 
-``get_document_store`` method can get or only the database_name or DatabaseOption
+After initializing and starting the server, you can use the ``get_document_store`` method to obtain a ``DocumentStore`` and start working with RavenDB as usual.
+
+``get_document_store`` method can take either just the ``database_name`` or ``DatabaseOptions``.
 
 DatabaseOptions
 ---------------
-* **database_name** - The name of the database
-* **skip_creating_database** - ``get_document_store`` will create a new database if the database is not exists, if this option if True we won't create the database (Default False).
-Open the RavenDB studio in the browser
---------------------------------------------
-To open RavenDB studio from ravendb-embedded you can use ``open_studio_in_browser`` method and the studio will open automatically
-one your default browser.
+
+- ``database_name``: The name of the database.
+- ``skip_creating_database``: ``get_document_store`` will create a new database if it does not exist. If this option is set to True, the database won't be created (Default False).
+
+Open RavenDB Studio in the Browser
+-----------------------------------
+
+To open RavenDB Studio from ``ravendb-embedded``, use the ``open_studio_in_browser`` method, and the studio will open automatically in your default browser.

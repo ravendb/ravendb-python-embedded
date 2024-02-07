@@ -7,7 +7,6 @@ from ravendb_embedded import EmbeddedServer, ServerOptions, CopyServerFromNugetP
 from tests import Person
 
 
-
 class BasicTest(TestCase):
     def test_embedded(self):
         temp_dir = tempfile.mkdtemp()
