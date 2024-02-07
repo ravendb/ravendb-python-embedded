@@ -26,14 +26,14 @@ class CopyServerProvider(ProvideRavenDBServer):
 
 
 class CopyServerFromNugetProvider(CopyServerProvider):
-    SERVER_FILES = "target/nuget/contentFiles/any/any/RavenDBServer"
+    SERVER_FILES = "target\\nuget\\contentFiles\\any\\any\\RavenDBServer"
 
     def __init__(self):
         module_path = Path(__file__).parent
         super().__init__(os.path.join(module_path, self.SERVER_FILES))
 
     def provide(self, target_directory: str) -> None:
-        if not os.path.exists("target"):
+        if not os.path.exists(target_directory):
             raise RuntimeError(
                 f"Unable to find 'target' directory in the current working directory ({os.path.abspath('.')}). "
                 f"Please make sure you execute the test in the ravendb_embedded directory with the provide.py file."
