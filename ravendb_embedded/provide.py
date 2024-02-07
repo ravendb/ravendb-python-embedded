@@ -4,6 +4,7 @@ import shutil
 import zipfile
 from abc import ABC, abstractmethod
 from io import BytesIO
+from pathlib import Path
 from typing import Union
 
 
@@ -28,7 +29,8 @@ class CopyServerFromNugetProvider(CopyServerProvider):
     SERVER_FILES = "target/nuget/contentFiles/any/any/RavenDBServer"
 
     def __init__(self):
-        super().__init__(self.SERVER_FILES)
+        module_path = Path(__file__).parent
+        super().__init__(os.path.join(module_path, self.SERVER_FILES))
 
     def provide(self, target_directory: str) -> None:
         if not os.path.exists("target"):

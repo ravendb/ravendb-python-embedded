@@ -26,12 +26,8 @@ class RuntimeFrameworkVersionMatcher:
         return cls.match_runtime(runtime, runtimes)
 
     @staticmethod
-    def match_runtime(
-        runtime: RuntimeFrameworkVersion, runtimes: List[RuntimeFrameworkVersion]
-    ) -> str:
-        sorted_runtimes = sorted(
-            runtimes, key=lambda x: (x.major, x.minor, x.patch), reverse=True
-        )
+    def match_runtime(runtime: RuntimeFrameworkVersion, runtimes: List[RuntimeFrameworkVersion]) -> str:
+        sorted_runtimes = sorted(runtimes, key=lambda x: (x.major, x.minor, x.patch), reverse=True)
 
         for version in sorted_runtimes:
             if runtime.match(version):
@@ -48,10 +44,7 @@ class RuntimeFrameworkVersionMatcher:
             return False
 
         framework_version = options.framework_version.lower()
-        if (
-            cls.WILDCARD not in framework_version
-            and cls.GREATER_OR_EQUAL not in framework_version
-        ):
+        if cls.WILDCARD not in framework_version and cls.GREATER_OR_EQUAL not in framework_version:
             return False
 
         return True
@@ -76,9 +69,7 @@ class RuntimeFrameworkVersionMatcher:
 
                 for line in process.stdout:
                     line = line.strip()
-                    if line.startswith(".NET runtimes installed:") or line.startswith(
-                        ".NET Core runtimes installed:"
-                    ):
+                    if line.startswith(".NET runtimes installed:") or line.startswith(".NET Core runtimes installed:"):
                         inside_runtimes = True
                         continue
                     if inside_runtimes and line.startswith("Microsoft.NETCore.App"):
@@ -93,9 +84,7 @@ class RuntimeFrameworkVersionMatcher:
                     runtimes.append(RuntimeFrameworkVersion(values[1]))
 
         except Exception as e:
-            raise RuntimeError(
-                "Unable to execute dotnet to retrieve list of installed runtimes"
-            ) from e
+            raise RuntimeError("Unable to execute dotnet to retrieve list of installed runtimes") from e
         finally:
             if process:
                 process.kill()
@@ -114,18 +103,14 @@ class RuntimeFrameworkVersion:
 
         framework_version = framework_version.lower()
 
-        suffixes = [
-            s for s in framework_version.split(self.SUFFIX_SEPARATOR) if s.strip()
-        ]
+        suffixes = [s for s in framework_version.split(self.SUFFIX_SEPARATOR) if s.strip()]
         if len(suffixes) != 1:
             framework_version = suffixes[0]
             self.suffix = self.SUFFIX_SEPARATOR.join(suffixes[1:])
         else:
             self.suffix = None
 
-        versions = [
-            v.strip() for v in framework_version.split(self.SEPARATORS) if v.strip()
-        ]
+        versions = [v.strip() for v in framework_version.split(self.SEPARATORS) if v.strip()]
         for i, version in enumerate(versions):
             if RuntimeFrameworkVersionMatcher.WILDCARD not in version:
                 tuple_values = self.parse(version)
@@ -133,9 +118,7 @@ class RuntimeFrameworkVersion:
                 continue
 
             if version != RuntimeFrameworkVersionMatcher.WILDCARD:
-                raise RuntimeError(
-                    f"Wildcard character must be a sole part of the version string, but was '{version}'"
-                )
+                raise RuntimeError(f"Wildcard character must be a sole part of the version string, but was '{version}'")
 
             self._set(i, None, None, MatchingType.EQUAL)
 
@@ -189,14 +172,10 @@ class RuntimeFrameworkVersion:
         matching_type: MatchingType,
     ) -> None:
         if i == 0:
-            self.assert_matching_type(
-                "major", value_as_string, MatchingType.EQUAL, matching_type
-            )
+            self.assert_matching_type("major", value_as_string, MatchingType.EQUAL, matching_type)
             self.major = value
         elif i == 1:
-            self.assert_matching_type(
-                "minor", value_as_string, MatchingType.EQUAL, matching_type
-            )
+            self.assert_matching_type("minor", value_as_string, MatchingType.EQUAL, matching_type)
             self.minor = value
         elif i == 2:
             self.assert_matching_type("patch", value_as_string, None, matching_type)
@@ -219,10 +198,7 @@ class RuntimeFrameworkVersion:
                 f"is not allowed when suffix ('{self.suffix}') is set."
             )
 
-        if (
-            expected_matching_type is not None
-            and expected_matching_type != matching_type
-        ):
+        if expected_matching_type is not None and expected_matching_type != matching_type:
             raise RuntimeError(
                 f"Cannot set '{field_name}' with value '{value_as_string}' "
                 f"because '{self.matching_type_to_string(matching_type)}' "
@@ -246,15 +222,9 @@ class RuntimeFrameworkVersion:
             return False
 
         if self.patch is not None:
-            if (
-                self.patch_matching_type == MatchingType.EQUAL
-                and self.patch != version.patch
-            ):
+            if self.patch_matching_type == MatchingType.EQUAL and self.patch != version.patch:
                 return False
-            elif (
-                self.patch_matching_type == MatchingType.GREATER_OR_EQUAL
-                and self.patch > version.patch
-            ):
+            elif self.patch_matching_type == MatchingType.GREATER_OR_EQUAL and self.patch > version.patch:
                 return False
 
         return self.suffix == version.suffix

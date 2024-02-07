@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from datetime import timedelta
+from pathlib import Path
 from typing import Optional
 
 from ravendb.documents.conventions import DocumentConventions
@@ -10,8 +11,8 @@ from ravendb.serverwide.database_record import DatabaseRecord
 
 from ravendb_embedded.provide import (
     ProvideRavenDBServer,
-    ExtractFromPkgResourceServerProvider,
     ExternalServerProvider,
+    CopyServerFromNugetProvider,
 )
 
 
@@ -37,14 +38,14 @@ class SecurityOptions:
 
 
 class ServerOptions:
-    BASE_DIRECTORY = os.path.abspath(os.path.curdir)
-    DEFAULT_SERVER_LOCATION = os.path.join(BASE_DIRECTORY, "RavenDBServer")
+    BASE_MODULE_DIRECTORY = str(Path(__file__).parent)
+    DEFAULT_SERVER_LOCATION = os.path.join(BASE_MODULE_DIRECTORY, CopyServerFromNugetProvider.SERVER_FILES)
 
     def __init__(self):
         self.framework_version: str = "7.0.15+"
-        self.logs_path: str = self.BASE_DIRECTORY + "/RavenDB/Logs"
-        self.data_directory: str = self.BASE_DIRECTORY + "/RavenDB"
-        self.provider: ProvideRavenDBServer = ExtractFromPkgResourceServerProvider()
+        self.logs_path: str = self.BASE_MODULE_DIRECTORY + "/RavenDB/Logs"
+        self.data_directory: str = self.BASE_MODULE_DIRECTORY + "/RavenDB"
+        self.provider: ProvideRavenDBServer = CopyServerFromNugetProvider()
         self.target_server_location: str = self.DEFAULT_SERVER_LOCATION
         self.dot_net_path: str = "dotnet"
         self.clear_target_server_location: bool = False
@@ -76,16 +77,12 @@ class ServerOptions:
             raise ValueError("certificate cannot be None")
 
         if self.security is not None:
-            raise RuntimeError(
-                "The security has already been set up for this ServerOptions object"
-            )
+            raise RuntimeError("The security has already been set up for this ServerOptions object")
 
         try:
             self.security = SecurityOptions()
             self.security.server_pfx_certificate_path = server_pfx_certificate_path
-            self.security.server_pfx_certificate_password = (
-                server_pfx_certificate_password
-            )
+            self.security.server_pfx_certificate_password = server_pfx_certificate_password
             self.security.client_pem_certificate_path = client_pem_certificate_path
             if ca_certificate_path:
                 self.security.ca_certificate_path = ca_certificate_path

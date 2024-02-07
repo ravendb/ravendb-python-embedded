@@ -12,9 +12,7 @@ class TestRuntimeFrameworkVersionMatcher(TestCase):
         options = ServerOptions()
         default_framework_version = ServerOptions.INSTANCE().framework_version
 
-        self.assertIn(
-            RuntimeFrameworkVersionMatcher.GREATER_OR_EQUAL, default_framework_version
-        )
+        self.assertIn(RuntimeFrameworkVersionMatcher.GREATER_OR_EQUAL, default_framework_version)
 
         options.framework_version = None
         self.assertIsNone(RuntimeFrameworkVersionMatcher.match(options))
@@ -38,39 +36,25 @@ class TestRuntimeFrameworkVersionMatcher(TestCase):
         runtimes = self.get_runtimes()
 
         runtime = RuntimeFrameworkVersion("3.1.1")
-        self.assertEqual(
-            RuntimeFrameworkVersionMatcher.match_runtime(runtime, runtimes), "3.1.1"
-        )
+        self.assertEqual(RuntimeFrameworkVersionMatcher.match_runtime(runtime, runtimes), "3.1.1")
 
         runtime = RuntimeFrameworkVersion("2.1.11")
-        self.assertEqual(
-            RuntimeFrameworkVersionMatcher.match_runtime(runtime, runtimes), "2.1.11"
-        )
+        self.assertEqual(RuntimeFrameworkVersionMatcher.match_runtime(runtime, runtimes), "2.1.11")
 
         runtime = RuntimeFrameworkVersion("3.1.x")
-        self.assertEqual(
-            RuntimeFrameworkVersionMatcher.match_runtime(runtime, runtimes), "3.1.3"
-        )
+        self.assertEqual(RuntimeFrameworkVersionMatcher.match_runtime(runtime, runtimes), "3.1.3")
 
         runtime = RuntimeFrameworkVersion("3.x")
-        self.assertEqual(
-            RuntimeFrameworkVersionMatcher.match_runtime(runtime, runtimes), "3.2.3"
-        )
+        self.assertEqual(RuntimeFrameworkVersionMatcher.match_runtime(runtime, runtimes), "3.2.3")
 
         runtime = RuntimeFrameworkVersion("3.x.x")
-        self.assertEqual(
-            RuntimeFrameworkVersionMatcher.match_runtime(runtime, runtimes), "3.2.3"
-        )
+        self.assertEqual(RuntimeFrameworkVersionMatcher.match_runtime(runtime, runtimes), "3.2.3")
 
         runtime = RuntimeFrameworkVersion("5.0.x")
-        self.assertEqual(
-            RuntimeFrameworkVersionMatcher.match_runtime(runtime, runtimes), "5.0.4"
-        )
+        self.assertEqual(RuntimeFrameworkVersionMatcher.match_runtime(runtime, runtimes), "5.0.4")
 
         runtime = RuntimeFrameworkVersion("x")
-        self.assertEqual(
-            RuntimeFrameworkVersionMatcher.match_runtime(runtime, runtimes), "5.0.4"
-        )
+        self.assertEqual(RuntimeFrameworkVersionMatcher.match_runtime(runtime, runtimes), "5.0.4")
 
         runtime = RuntimeFrameworkVersion("5.0.x-rc.2.20475.17")
         self.assertEqual(
@@ -95,9 +79,7 @@ class TestRuntimeFrameworkVersionMatcher(TestCase):
 
         runtime = RuntimeFrameworkVersion("3.1.1+")
         self.assertEqual(str(runtime), "3.1.1+")
-        self.assertEqual(
-            RuntimeFrameworkVersionMatcher.match_runtime(runtime, runtimes), "3.1.3"
-        )
+        self.assertEqual(RuntimeFrameworkVersionMatcher.match_runtime(runtime, runtimes), "3.1.3")
 
         runtime = RuntimeFrameworkVersion("3.1.4+")
         self.assertEqual(str(runtime), "3.1.4+")

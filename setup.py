@@ -7,9 +7,7 @@ from setuptools.command.sdist import sdist
 
 RAVENDB_VERSION = "6.0.2"
 ZIP_FILE_NAME = "server.zip"
-RAVENDB_DOWNLOAD_URL = (
-    f"https://www.nuget.org/api/v2/package/RavenDB.Embedded/{RAVENDB_VERSION}"
-)
+RAVENDB_DOWNLOAD_URL = f"https://www.nuget.org/api/v2/package/RavenDB.Embedded/{RAVENDB_VERSION}"
 
 RAVENDB_DOWNLOAD_FOLDER = "ravendb_embedded/target/nuget"
 RAVENDB_FULL_DOWNLOAD_PATH = os.path.join(RAVENDB_DOWNLOAD_FOLDER, ZIP_FILE_NAME)
@@ -47,7 +45,7 @@ setup(
     package_dir={"ravendb_embedded": "ravendb_embedded"},
     include_package_data=True,
     long_description=open("README.rst").read(),
-    version="6.0.2.post2",
+    version="6.0.2.post3",
     description="RavenDB Embedded library to run RavenDB in an embedded way",
     author="RavenDB",
     author_email="support@ravendb.net",
