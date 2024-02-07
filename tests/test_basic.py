@@ -3,10 +3,9 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
-from ravendb_embedded.embedded_server import EmbeddedServer
-from ravendb_embedded.options import ServerOptions, DatabaseOptions
-from ravendb_embedded.provide import CopyServerFromNugetProvider
+from ravendb_embedded import EmbeddedServer, ServerOptions, CopyServerFromNugetProvider, DatabaseOptions
 from tests import Person
+
 
 
 class BasicTest(TestCase):
