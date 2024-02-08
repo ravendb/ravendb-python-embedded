@@ -45,7 +45,7 @@ setup(
     package_dir={"ravendb_embedded": "ravendb_embedded"},
     include_package_data=True,
     long_description=open("README.rst").read(),
-    version="5.2.0.post3",
+    version="5.2.5",
     description="RavenDB Embedded library to run RavenDB in an embedded way",
     author="RavenDB",
     author_email="support@ravendb.net",
@@ -53,7 +53,7 @@ setup(
     license="Custom EULA",
     keywords="ravendb embedded database nosql doc db",
     install_requires=[
-        "ravendb>=5.2.4",
+        "ravendb==5.2.5",
         "cryptography~=42.0.0",
     ],
     zip_safe=False,
