@@ -99,7 +99,9 @@ class EmbeddedServer:
             store.maintenance.server.send(CreateDatabaseOperation(options.database_record))
         except Exception as e:
             # Expected behavior when the database already exists
-            if "conflict" in e.args[0]:  # todo: change exc type when python client will implement conflict handling
+            if (
+                "conflict" in e.args[0] or "already exists" in e.args[0]
+            ):  # todo: change exc type when python client will implement conflict handling
                 self._log_debug(f"{options.database_record.database_name} already exists.")
             else:
                 raise e

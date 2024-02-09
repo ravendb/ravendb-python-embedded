@@ -13,7 +13,6 @@ class BasicTest(TestCase):
         try:
             with EmbeddedServer() as embedded:
                 server_options = ServerOptions()
-                server_options.target_server_location = str(Path(temp_dir, "RavenDBServer"))
                 server_options.data_directory = str(Path(temp_dir, "RavenDB"))
                 server_options.logs_path = str(Path(temp_dir, "Logs"))
                 server_options.provider = CopyServerFromNugetProvider()
@@ -36,7 +35,6 @@ class BasicTest(TestCase):
 
             with EmbeddedServer() as embedded:
                 server_options = ServerOptions()
-                server_options.target_server_location = str(Path(temp_dir, "RavenDBServer"))
                 server_options.data_directory = str(Path(temp_dir, "RavenDB"))
                 server_options.provider = CopyServerFromNugetProvider()
                 embedded.start_server(server_options)

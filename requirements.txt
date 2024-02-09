@@ -1,2 +1,2 @@
-ravendb==5.2.5
+ravendb==5.2.5.post1
 cryptography~=42.0.0
