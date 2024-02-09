@@ -1,0 +1,2 @@
+ravendb==5.2.5
+cryptography~=42.0.0

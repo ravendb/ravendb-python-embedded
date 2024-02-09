@@ -1,8 +1,8 @@
 /.idea
 /test.py
 /dist
-/pyravendb_embedded.egg-info
-/pyravendb_embedded/RavenDBServer
+/ravendb_embedded.egg-info
+/ravendb_embedded/target
 *.pyc
 *.log
 *.raven-topology
