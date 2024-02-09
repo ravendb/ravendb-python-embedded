@@ -24,7 +24,6 @@ class TestSecuredBasic(TestCase):
                     ca_certificate_path=CA_CERTIFICATE_LOCATION,
                 )
 
-                server_options.target_server_location = str(Path(temp_dir, "RavenDBServer"))
                 server_options.data_directory = str(Path(temp_dir, "RavenDB"))
                 server_options.logs_path = str(Path(temp_dir, "Logs"))
                 server_options.provider = CopyServerFromNugetProvider()
