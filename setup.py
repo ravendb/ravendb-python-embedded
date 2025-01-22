@@ -45,7 +45,7 @@ setup(
     package_dir={"ravendb_embedded": "ravendb_embedded"},
     include_package_data=True,
     long_description=open("README.rst").read(),
-    version="5.2.6.post1",
+    version="5.2.6.post2",
     description="RavenDB Embedded library to run RavenDB in an embedded way",
     author="RavenDB",
     author_email="support@ravendb.net",
