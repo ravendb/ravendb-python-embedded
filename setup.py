@@ -56,5 +56,6 @@ setup(
         "ravendb==5.2.6",
         "cryptography~=42.0.0",
     ],
+    license_files="LICENSE",
     zip_safe=False,
 )
