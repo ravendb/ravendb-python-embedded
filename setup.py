@@ -5,7 +5,7 @@ import os
 import urllib.request
 from setuptools.command.sdist import sdist
 
-RAVENDB_VERSION = "5.4.200"
+RAVENDB_VERSION = "5.4.206"
 ZIP_FILE_NAME = "server.zip"
 RAVENDB_DOWNLOAD_URL = f"https://www.nuget.org/api/v2/package/RavenDB.Embedded/{RAVENDB_VERSION}"
 
