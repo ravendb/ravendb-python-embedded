@@ -26,7 +26,7 @@ class CopyServerProvider(ProvideRavenDBServer):
 
 
 class CopyServerFromNugetProvider(CopyServerProvider):
-    SERVER_FILES = "target\\nuget\\contentFiles\\any\\any\\RavenDBServer"
+    SERVER_FILES = Path("target/nuget/contentFiles/any/any/RavenDBServer")
 
     def __init__(self):
         module_path = Path(__file__).parent
@@ -76,9 +76,11 @@ class ExtractFromPkgResourceServerProvider(ProvideRavenDBServer):
 
 class ExternalServerProvider(ProvideRavenDBServer):
     SERVER_DLL_FILENAME = "Raven.Server.dll"
+    SERVER_SFA_FILENAME = "Raven.Server"
 
     def __init__(self, server_location: str):
         self.server_location = server_location
+        self.is_single_file_app = False
 
         file_server_location = os.path.abspath(server_location)
 
@@ -94,6 +96,14 @@ class ExternalServerProvider(ProvideRavenDBServer):
         if os.path.isdir(file_server_location) and os.path.exists(
             os.path.join(file_server_location, self.SERVER_DLL_FILENAME)
         ):
+            self.inner_provider = CopyServerProvider(server_location)
+            return
+
+        # Also look for Single File App file - Raven.Server
+        if os.path.isdir(file_server_location) and os.path.exists(
+            os.path.join(file_server_location, self.SERVER_SFA_FILENAME)
+        ):
+            self.is_single_file_app = True
             self.inner_provider = CopyServerProvider(server_location)
             return
 

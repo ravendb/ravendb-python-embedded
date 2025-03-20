@@ -46,3 +46,12 @@ class TestCustomProvider(TestCase):
                     with store.open_session() as session:
                         loaded_person = session.load("no-such-person", Person)
                         self.assertIsNone(loaded_person)
+
+    def test_can_use_default_nuget_provider(self):
+        with EmbeddedServer() as embedded:
+            database_options = DatabaseOptions.from_database_name("Test")
+            embedded.start_server()
+            with embedded.get_document_store_from_options(database_options) as store:
+                with store.open_session() as session:
+                    loaded_person = session.load("no-such-person", Person)
+                    self.assertIsNone(loaded_person)

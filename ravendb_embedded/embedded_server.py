@@ -148,8 +148,11 @@ class EmbeddedServer:
 
             options.provider.provide(options.target_server_location)
         except Exception as e:
-            self._log_debug(f"Failed to spawn server files. {e}")
-            raise RuntimeError(f"Failed to spawn server files. {e}") from e
+            message = (
+                f"Failed to spawn server files.{os.linesep}Path: '{options.target_server_location}'{os.linesep}{e}"
+            )
+            self._log_debug(message)
+            raise RuntimeError(message) from e
 
         process = RavenServerRunner.run(options)
 
@@ -170,13 +173,19 @@ class EmbeddedServer:
         if url_ref["value"] is None:
             error_string = self.read_output(process.stderr, startup_duration, options, None)
             self._shutdown_server_process(process)
-            raise RuntimeError(self.build_startup_exception_message(output_string, error_string))
+            raise RuntimeError(self.build_startup_exception_message(output_string, error_string, process))
 
         return url_ref["value"], process
 
     @staticmethod
-    def build_startup_exception_message(output_string: str, error_string: str) -> str:
+    def build_startup_exception_message(output_string: str, error_string: str, process: subprocess.Popen) -> str:
         sb = ["Unable to start the RavenDB Server", os.linesep]
+
+        if process.args:
+            sb.append("Command:")
+            sb.append(os.linesep)
+            sb.append(" ".join(process.args))
+            sb.append(os.linesep)
 
         if error_string:
             sb.append("Error:")
@@ -190,6 +199,7 @@ class EmbeddedServer:
             sb.append(output_string)
             sb.append(os.linesep)
 
+        sb.append("Check your ServerOptions, dotnet version, or run the command manually to see detailed error.")
         return "".join(sb)
 
     def online(
@@ -204,7 +214,7 @@ class EmbeddedServer:
         if line is None:
             error_string = self.read_output(process.stderr, startup_duration, options, None)
             self._shutdown_server_process(process)
-            raise RuntimeError(self.build_startup_exception_message("".join(builder), error_string))
+            raise RuntimeError(self.build_startup_exception_message("".join(builder), error_string, process))
 
         prefix = "Server available on: "
         if line.startswith(prefix):
@@ -248,7 +258,7 @@ class EmbeddedServer:
             line = read_output_line()
 
             if options.max_server_startup_time_duration < startup_duration.elapsed():
-                return None
+                return "".join(sb)
 
             if line is None:
                 break
