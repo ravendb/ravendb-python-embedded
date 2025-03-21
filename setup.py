@@ -5,7 +5,7 @@ import os
 import urllib.request
 from setuptools.command.sdist import sdist
 
-RAVENDB_VERSION = "5.4.207"
+RAVENDB_VERSION = "6.2.4"
 ZIP_FILE_NAME = "server.zip"
 RAVENDB_DOWNLOAD_URL = f"https://www.nuget.org/api/v2/package/RavenDB.Embedded/{RAVENDB_VERSION}"
 
@@ -38,14 +38,14 @@ class CustomSDist(sdist):
 
 
 setup(
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     cmdclass={"sdist": CustomSDist},
     name="ravendb-embedded",
     packages=["ravendb_embedded"],
     package_dir={"ravendb_embedded": "ravendb_embedded"},
     include_package_data=True,
     long_description=open("README.rst").read(),
-    version="5.4.0",
+    version="6.2.4",
     description="RavenDB Embedded library to run RavenDB in an embedded way",
     author="RavenDB",
     author_email="support@ravendb.net",
