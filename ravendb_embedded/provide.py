@@ -26,7 +26,7 @@ class CopyServerProvider(ProvideRavenDBServer):
 
 
 class CopyServerFromNugetProvider(CopyServerProvider):
-    SERVER_FILES = "target\\nuget\\contentFiles\\any\\any\\RavenDBServer"
+    SERVER_FILES = Path("target/nuget/contentFiles/any/any/RavenDBServer")
 
     def __init__(self):
         module_path = Path(__file__).parent
@@ -106,8 +106,6 @@ class ExternalServerProvider(ProvideRavenDBServer):
             self.is_single_file_app = True
             self.inner_provider = CopyServerProvider(server_location)
             return
-
-
 
         raise ValueError(
             f"Unable to find RavenDB server (expected directory with {self.SERVER_DLL_FILENAME}) or zip file. "
