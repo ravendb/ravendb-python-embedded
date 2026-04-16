@@ -1,2 +1,2 @@
-ravendb~=7.2.0
+ravendb~=7.2.1
 cryptography~=42.0.0

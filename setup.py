@@ -5,7 +5,7 @@ import os
 import urllib.request
 from setuptools.command.sdist import sdist
 
-RAVENDB_VERSION = "7.2.0"
+RAVENDB_VERSION = "7.2.1"
 ZIP_FILE_NAME = "server.zip"
 RAVENDB_DOWNLOAD_URL = f"https://www.nuget.org/api/v2/package/RavenDB.Embedded/{RAVENDB_VERSION}"
 
@@ -45,7 +45,7 @@ setup(
     package_dir={"ravendb_embedded": "ravendb_embedded"},
     include_package_data=True,
     long_description=open("README.rst").read(),
-    version="7.2.0",
+    version="7.2.1",
     description="RavenDB Embedded library to run RavenDB in an embedded way",
     author="RavenDB",
     author_email="support@ravendb.net",
@@ -53,7 +53,7 @@ setup(
     license="Custom EULA",
     keywords="ravendb embedded database nosql doc db",
     install_requires=[
-        "ravendb~=7.2.0",
+        "ravendb~=7.2.1",
         "cryptography~=42.0.0",
     ],
     license_files="LICENSE",
