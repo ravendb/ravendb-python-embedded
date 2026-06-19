@@ -54,7 +54,7 @@ setup(
     keywords="ravendb embedded database nosql doc db",
     install_requires=[
         "ravendb~=7.2.1",
-        "cryptography~=42.0.0",
+        "cryptography>=42.0.0",
     ],
     license_files="LICENSE",
     zip_safe=False,
