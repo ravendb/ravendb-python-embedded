@@ -1,0 +1,59 @@
+name: tests
+
+on:
+  push:
+    branches: [v7.2]
+  pull_request:
+    branches: [v7.2]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    env:
+      # The server targets net8.0, so default resolution already exercises .NET 8. Runners
+      # preinstall .NET 8, so to actually exercise .NET 10 we force it via fx-version (empty
+      # = default resolution). See tests/pin_framework_version.
+      RAVENDB_TEST_FRAMEWORK_VERSION: "${{ matrix.fx }}"
+    strategy:
+      fail-fast: false
+      # Minimal spread: Python {3.9,3.13} x OS {ubuntu,windows} x .NET {8 default, 10 forced}
+      # each appears at least once.
+      matrix:
+        include:
+          - { os: ubuntu-latest, python: "3.13", dotnet: "10.0", fx: "10.0.x" }
+          - { os: ubuntu-latest, python: "3.9", dotnet: "8.0", fx: "" }
+          - { os: windows-latest, python: "3.13", dotnet: "10.0", fx: "10.0.x" }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Set up .NET ${{ matrix.dotnet }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ matrix.dotnet }}
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Check formatting (black)
+        run: |
+          pip install black
+          black --check .
+
+      # Populates ravendb_embedded/target/nuget via the project's sdist hook (the server the
+      # tests copy from). setuptools is installed explicitly; modern virtualenvs omit it.
+      - name: Fetch bundled RavenDB server
+        run: |
+          pip install setuptools wheel
+          python setup.py sdist
+
+      - name: Run tests
+        run: python -m unittest discover -s tests

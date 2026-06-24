@@ -9,28 +9,16 @@ from ravendb_embedded.runtime_framework_version_matcher import (
 
 class TestRuntimeFrameworkVersionMatcher(TestCase):
     def test_match_1(self):
-        options = ServerOptions()
-        default_framework_version = ServerOptions.INSTANCE().framework_version
+        # Default framework version is unenforced (empty); match() returns it unchanged.
+        self.assertFalse(ServerOptions.INSTANCE().framework_version)
 
-        self.assertIn(RuntimeFrameworkVersionMatcher.GREATER_OR_EQUAL, default_framework_version)
+        options = ServerOptions()
 
         options.framework_version = None
         self.assertIsNone(RuntimeFrameworkVersionMatcher.match(options))
 
-        options = ServerOptions()
-        framework_version = RuntimeFrameworkVersion(options.framework_version)
-        framework_version.patch = None
-
-        options.framework_version = framework_version.__str__()
-        match = RuntimeFrameworkVersionMatcher.match(options)
-        self.assertIsNotNone(match)
-
-        match_framework_version = RuntimeFrameworkVersion(match)
-        self.assertIsNotNone(match_framework_version.major)
-        self.assertIsNotNone(match_framework_version.minor)
-        self.assertIsNotNone(match_framework_version.patch)
-
-        self.assertTrue(framework_version.match(match_framework_version))
+        options.framework_version = ""
+        self.assertEqual("", RuntimeFrameworkVersionMatcher.match(options))
 
     def test_match_2(self):
         runtimes = self.get_runtimes()

@@ -6,27 +6,22 @@ from unittest import TestCase
 from ravendb_embedded.embedded_server import EmbeddedServer
 from ravendb_embedded.options import ServerOptions, DatabaseOptions
 from ravendb_embedded.provide import CopyServerFromNugetProvider
-from tests import Person
+from tests import Person, pin_framework_version
+from tests.certificates import generate_self_signed_certificates
 
 
 class TestSecuredBasic(TestCase):
     def test_secured_embedded(self):
-        SERVER_CERTIFICATE_LOCATION = "C:\\RavenDB Clients\\Https\\server.pfx"
-        CA_CERTIFICATE_LOCATION = "C:\\RavenDB Clients\\Https\\ca.crt"
-        CLIENT_CERTIFICATE_LOCATION = "C:\\RavenDB Clients\\Https\\python.pem"
         temp_dir = tempfile.mkdtemp()
         try:
+            server_pfx, client_pem, ca_crt = generate_self_signed_certificates(temp_dir)
             with EmbeddedServer() as embedded:
                 server_options = ServerOptions()
-                server_options.secured(
-                    SERVER_CERTIFICATE_LOCATION,
-                    CLIENT_CERTIFICATE_LOCATION,
-                    ca_certificate_path=CA_CERTIFICATE_LOCATION,
-                )
-
+                server_options.secured(server_pfx, client_pem, ca_certificate_path=ca_crt)
                 server_options.data_directory = str(Path(temp_dir, "RavenDB"))
                 server_options.logs_path = str(Path(temp_dir, "Logs"))
                 server_options.provider = CopyServerFromNugetProvider()
+                pin_framework_version(server_options)
                 embedded.start_server(server_options)
 
                 database_options = DatabaseOptions.from_database_name("Test")
