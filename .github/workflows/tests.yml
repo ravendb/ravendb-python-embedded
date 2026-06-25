@@ -11,27 +11,23 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     env:
-      # The server targets net8.0, so default resolution already exercises .NET 8. Runners
-      # preinstall .NET 8, so to actually exercise .NET 10 we force it via fx-version (empty
-      # = default resolution). See tests/pin_framework_version.
-      RAVENDB_TEST_FRAMEWORK_VERSION: "${{ matrix.fx }}"
+      # .NET 8 (the server's target) is exercised by default resolution; .NET 10 must be
+      # forced since runners preinstall .NET 8 and would otherwise win. tests/pin_framework_version.
+      RAVENDB_TEST_FRAMEWORK_VERSION: ${{ matrix.dotnet == '10.0' && '10.0.x' || '' }}
     strategy:
       fail-fast: false
-      # Minimal spread: Python {3.9,3.13} x OS {ubuntu,windows} x .NET {8 default, 10 forced}
-      # each appears at least once.
+      # Latest Python only (the ravendb client requires 3.10+); full OS x .NET matrix.
       matrix:
-        include:
-          - { os: ubuntu-latest, python: "3.13", dotnet: "10.0", fx: "10.0.x" }
-          - { os: ubuntu-latest, python: "3.9", dotnet: "8.0", fx: "" }
-          - { os: windows-latest, python: "3.13", dotnet: "10.0", fx: "10.0.x" }
+        os: [ubuntu-latest, windows-latest]
+        dotnet: ["8.0", "10.0"]
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python }}
+      - name: Set up Python 3.13
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python }}
+          python-version: "3.13"
 
       - name: Set up .NET ${{ matrix.dotnet }}
         uses: actions/setup-dotnet@v4
