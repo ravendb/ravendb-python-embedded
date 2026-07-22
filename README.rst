@@ -24,6 +24,24 @@ Install ``ravendb-embedded`` from `PyPi <https://pypi.python.org/pypi>`_ using:
 
 Installing ``ravendb-embedded`` from pip will also provide you with a copy of the RavenDB server binary files.
 
+============
+Requirements
+============
+
+Python 3.10+ is required.
+
+The bundled server is a .NET application, so a matching **.NET runtime** must be available on the machine:
+
+- ``ravendb-embedded`` 7.2.x requires **.NET 10**
+- ``ravendb-embedded`` 7.1.x requires **.NET 8**
+
+Check what you have with ``dotnet --list-runtimes``. If you would rather not install .NET, you can run a
+self-contained server (bundles its own runtime) or attach to a server you run yourself (for example in
+Docker). Runnable guides live in the ``labs/`` folder:
+
+- ``labs/01-embedded-zero-config.md`` - embedded server, needs a system .NET
+- ``labs/02-embedded-external-server.md`` - external self-contained server, no .NET required
+
 ========
 Usage
 ========
