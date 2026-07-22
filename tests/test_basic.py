@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest import TestCase
 
 from ravendb_embedded import EmbeddedServer, ServerOptions, CopyServerFromNugetProvider, DatabaseOptions
-from tests import Person, pin_framework_version
+from tests import Person
 
 
 class BasicTest(TestCase):
@@ -17,7 +17,6 @@ class BasicTest(TestCase):
                 server_options.logs_path = str(Path(temp_dir, "Logs"))
                 server_options.provider = CopyServerFromNugetProvider()
                 server_options.command_line_args = ["--Features.Availability=Experimental"]
-                pin_framework_version(server_options)
                 embedded.start_server(server_options)
 
                 database_options = DatabaseOptions.from_database_name("Test")
@@ -38,7 +37,6 @@ class BasicTest(TestCase):
                 server_options = ServerOptions()
                 server_options.data_directory = str(Path(temp_dir, "RavenDB"))
                 server_options.provider = CopyServerFromNugetProvider()
-                pin_framework_version(server_options)
                 embedded.start_server(server_options)
 
                 with embedded.get_document_store("Test") as store:
