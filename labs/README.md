@@ -6,7 +6,7 @@ Pick the one that matches your environment.
 | Lab | Path | For whom | Needs system .NET? |
 |-----|------|----------|--------------------|
 | [01](01-embedded-zero-config.md) | Embedded, zero-config | Local dev or CI on a machine that already has .NET | Yes (.NET 10 for 7.2.x) |
-| 02 (in progress) | External self-contained server | You do not want to install .NET at all | No |
+| [02](02-embedded-external-server.md) | External self-contained server | You do not want to install .NET at all | No |
 | 03 (in progress) | Attach to a server you run yourself (Docker, testcontainers, shared CI) | Containerized CI pipelines | No |
 
 RavenDB version to .NET mapping: **7.1.x needs .NET 8, 7.2.x needs .NET 10.** The bundled
