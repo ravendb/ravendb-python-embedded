@@ -13,12 +13,6 @@ from ravendb_embedded.runtime_framework_version_matcher import (
 )
 
 
-class CommandLineArgumentEscaper:
-    @staticmethod
-    def escape_single_arg(arg: str) -> str:
-        return arg  # lol
-
-
 class RavenServerRunner:
     @staticmethod
     def run(options: ServerOptions) -> subprocess.Popen:
@@ -58,41 +52,30 @@ class RavenServerRunner:
         if not options.dot_net_path.strip():
             raise ValueError("dot_net_path cannot be None or whitespace")
 
+        # Args are passed to Popen as a list (no shell), so they need no manual escaping.
         command_line_args = [
             f"--Embedded.ParentProcessId={RavenServerRunner.get_process_id('0')}",
             f"--License.Eula.Accepted={'true' if options.accept_eula else 'false'}",
             "--Setup.Mode=None",
-            f"--DataDir={CommandLineArgumentEscaper.escape_single_arg(options.data_directory)}",
-            f"--Logs.Path={CommandLineArgumentEscaper.escape_single_arg(options.logs_path)}",
+            f"--DataDir={options.data_directory}",
+            f"--Logs.Path={options.logs_path}",
         ]
 
         if options.security:
             options.server_url = options.server_url or "https://127.0.0.1:0"
 
             if options.security.server_pfx_certificate_path:
-                command_line_args.extend(
-                    [
-                        f"--Security.Certificate.Path="
-                        f"{CommandLineArgumentEscaper.escape_single_arg(options.security.server_pfx_certificate_path)}"
-                    ]
-                )
+                command_line_args.append(f"--Security.Certificate.Path={options.security.server_pfx_certificate_path}")
 
                 if options.security.server_pfx_certificate_password:
-                    command_line_args.extend(
-                        [
-                            "--Security.Certificate.Password="
-                            + CommandLineArgumentEscaper.escape_single_arg(
-                                options.security.server_pfx_certificate_password
-                            )
-                        ]
+                    command_line_args.append(
+                        f"--Security.Certificate.Password={options.security.server_pfx_certificate_password}"
                     )
             elif options.security.certificate_exec:
                 command_line_args.extend(
                     [
-                        f"--Security.Certificate.Exec="
-                        f"{CommandLineArgumentEscaper.escape_single_arg(options.security.certificate_exec)}",
-                        f"--Security.Certificate.Exec.Arguments="
-                        f"{CommandLineArgumentEscaper.escape_single_arg(options.security.certificate_arguments)}",
+                        f"--Security.Certificate.Exec={options.security.certificate_exec}",
+                        f"--Security.Certificate.Exec.Arguments={options.security.certificate_arguments}",
                     ]
                 )
             if options.security.client_pem_certificate_path:
@@ -102,12 +85,7 @@ class RavenServerRunner:
                 cert = x509.load_pem_x509_certificate(cert_data, default_backend())
                 thumbprint = cert.fingerprint(hashes.SHA256()).hex()
 
-                command_line_args.extend(
-                    [
-                        f"--Security.WellKnownCertificates.Admin="
-                        f"{CommandLineArgumentEscaper.escape_single_arg(thumbprint)}"
-                    ]
-                )
+                command_line_args.append(f"--Security.WellKnownCertificates.Admin={thumbprint}")
         else:
             options.server_url = options.server_url or "http://127.0.0.1:0"
 
