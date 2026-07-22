@@ -1,3 +1,4 @@
+import json
 import os
 import pkgutil
 import shutil
@@ -92,25 +93,51 @@ class ExternalServerProvider(ProvideRavenDBServer):
             self.inner_provider = ExtractFromZipServerProvider(server_location)
             return
 
-        # Alternatively, it might be a directory - look for Raven.Server.exe inside
-        if os.path.isdir(file_server_location) and os.path.exists(
-            os.path.join(file_server_location, self.SERVER_DLL_FILENAME)
-        ):
-            self.inner_provider = CopyServerProvider(server_location)
-            return
+        # A directory can be a self-contained build (bundled runtime, run the native apphost
+        # directly) or a framework-dependent build (run via a system `dotnet`). Check
+        # self-contained first: a self-contained dir also contains Raven.Server.dll, so the
+        # old "look for the .dll" heuristic would misclassify it as framework-dependent and
+        # fall back to `dotnet`, needing a system .NET.
+        if os.path.isdir(file_server_location):
+            if self._is_self_contained(file_server_location):
+                self.is_single_file_app = True
+                self.inner_provider = CopyServerProvider(server_location)
+                return
 
-        # Also look for Single File App file - Raven.Server
-        if os.path.isdir(file_server_location) and os.path.exists(
-            os.path.join(file_server_location, self.SERVER_SFA_FILENAME)
-        ):
-            self.is_single_file_app = True
-            self.inner_provider = CopyServerProvider(server_location)
-            return
+            if os.path.exists(os.path.join(file_server_location, self.SERVER_DLL_FILENAME)):
+                self.inner_provider = CopyServerProvider(server_location)
+                return
 
         raise ValueError(
             f"Unable to find RavenDB server (expected directory with {self.SERVER_DLL_FILENAME}) or zip file. "
             f"Used directory = {server_location}"
         )
+
+    @staticmethod
+    def _is_self_contained(directory: str) -> bool:
+        # A self-contained server bundles the .NET runtime, so it runs via its native apphost
+        # (Raven.Server[.exe]) with no system `dotnet`. The reliable marker is
+        # `includedFrameworks` in the runtime config; otherwise treat a single-file publish
+        # (apphost present, no managed .dll) as self-contained too.
+        runtime_config = os.path.join(directory, "Raven.Server.runtimeconfig.json")
+        if os.path.isfile(runtime_config):
+            try:
+                with open(runtime_config, encoding="utf-8") as config_file:
+                    runtime_options = json.load(config_file).get("runtimeOptions", {})
+                if runtime_options.get("includedFrameworks"):
+                    return True
+            except (OSError, ValueError):
+                pass
+
+        has_managed_dll = os.path.exists(os.path.join(directory, ExternalServerProvider.SERVER_DLL_FILENAME))
+        has_apphost = any(
+            os.path.exists(os.path.join(directory, name))
+            for name in (
+                ExternalServerProvider.SERVER_SFA_FILENAME,
+                f"{ExternalServerProvider.SERVER_SFA_FILENAME}.exe",
+            )
+        )
+        return has_apphost and not has_managed_dll
 
     def provide(self, target_directory: str) -> None:
         self.inner_provider.provide(target_directory)

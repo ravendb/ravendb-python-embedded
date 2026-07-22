@@ -32,7 +32,11 @@ class RavenServerRunner:
             raise ValueError("logs_path cannot be None or whitespace")
 
         is_sfa = isinstance(options.provider, ExternalServerProvider) and options.provider.is_single_file_app
-        file_name = "Raven.Server" if is_sfa else "Raven.Server.dll"
+        if is_sfa:
+            # Self-contained / single-file build: run the native apphost, no `dotnet`.
+            file_name = "Raven.Server.exe" if os.name == "nt" else "Raven.Server"
+        else:
+            file_name = "Raven.Server.dll"
 
         server_paths = [
             f"{file_name}",
