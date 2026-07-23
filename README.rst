@@ -2,101 +2,163 @@
 Overview
 ========
 
-``ravendb-embedded`` is a RavenDB package for running RavenDB in embedded mode.
+``ravendb-embedded`` runs a real RavenDB server from inside your Python program. You
+``pip install`` it, start the server in-process, and talk to it with the normal ``ravendb``
+client. There is no separate server to install, configure, or keep running: the server's
+lifetime follows your process.
+
+Reach for it when you want:
+
+- **Local development** without setting up a standalone RavenDB.
+- **Integration tests** against a real server instead of a mock (see also ``ravendb-test-driver``).
+- **Small or self-contained apps** that ship the database alongside the code.
 
 .. code-block:: python
 
-    EmbeddedServer().start_server()
-    with EmbeddedServer().get_document_store("Embedded") as store:
-        with store.open_session() as session:
-            session.store(User(name="Ilay", age=4))
-            session.save_changes()
+    from ravendb_embedded import EmbeddedServer
+
+    with EmbeddedServer() as server:
+        server.start_server()
+        with server.get_document_store("Embedded") as store:
+            with store.open_session() as session:
+                session.store({"name": "Ayende"}, "people/1")
+                session.save_changes()
 
 ============
 Installation
 ============
 
-Install ``ravendb-embedded`` from `PyPi <https://pypi.python.org/pypi>`_ using:
-
 .. code-block:: bash
 
     pip install ravendb-embedded
 
-Installing ``ravendb-embedded`` from pip will also provide you with a copy of the RavenDB server binary files.
+The install includes a copy of the RavenDB server binaries. Python 3.10+ is required.
 
-============
-Requirements
-============
+================================
+The .NET requirement (read this)
+================================
 
-Python 3.10+ is required.
+The bundled server is a .NET application, so a matching **.NET runtime** must be on the machine.
+The required version tracks the bundled server:
 
-The bundled server is a .NET application, so a matching **.NET runtime** must be available on the machine:
+============================  ==================
+``ravendb-embedded`` version  Required runtime
+============================  ==================
+7.2.x                         .NET 10
+7.1.x                         .NET 8
+============================  ==================
 
-- ``ravendb-embedded`` 7.2.x requires **.NET 10**
-- ``ravendb-embedded`` 7.1.x requires **.NET 8**
+Check what is installed with ``dotnet --list-runtimes`` (look for ``Microsoft.NETCore.App``).
+Because the requirement follows the bundled server, it can change on a minor upgrade, so
+re-check it when you bump versions.
 
-Check what you have with ``dotnet --list-runtimes``. If you would rather not install .NET, you can run a
-self-contained server (bundles its own runtime) or attach to a server you run yourself (for example in
-Docker). Runnable guides live in the ``labs/`` folder:
+If the machine cannot or should not have .NET, use the self-contained path under
+`Run without installing .NET`_ below.
 
-- ``labs/01-embedded-zero-config.md`` - embedded server, needs a system .NET
-- ``labs/02-embedded-external-server.md`` - external self-contained server, no .NET required
-
-========
+=====
 Usage
-========
+=====
 
-Start a server
---------------
+The three sections below are the ways people actually use this package. Pick the one that
+matches your environment; each links to a runnable walkthrough in ``labs/``.
 
-To start the RavenDB server, call the ``start_server()`` method from an ``EmbeddedServer`` instance.
+Run it (the default, needs .NET)
+--------------------------------
 
-.. code-block:: python
-
-    EmbeddedServer.start_server()
-
-For more control over your server, you can pass ``server_options`` to the ``start_server()`` method.
-
-ServerOptions
--------------
-
-- ``framework_version``: The framework version to run the server with.
-- ``data_directory``: Where to save the database data (if None, the files will be saved in the RavenDB folder in the base folder).
-- ``server_url``: The URL the server will be opened on (if None, the server will open on localhost).
-- ``dotnet_path``: The location of ``dotnet.exe`` (if .NET Core is not installed on your machine, you can download `dotnet binaries <https://www.microsoft.com/net/download/windows>`_ and provide the path).
-- ``command_line_args``: A list of all `server command arguments <https://ravendb.net/docs/article-page/6.0/csharp/server/configuration/command-line-arguments>`_.
+Start the server and get a document store. This is the zero-config path and uses the system
+.NET described above. Pass a ``ServerOptions`` when you want to control where data lives, the
+bind URL, and so on.
 
 .. code-block:: python
 
-    server_options = ServerOptions(data_directory="MYPATH/RavenDBDataDir")
-    EmbeddedServer().start_server(server_options)
+    from ravendb_embedded import EmbeddedServer, ServerOptions
+
+    options = ServerOptions()
+    options.data_directory = "MYPATH/RavenDBDataDir"   # optional; defaults to a local RavenDB folder
+
+    with EmbeddedServer() as server:
+        server.start_server(options)
+        with server.get_document_store("MyDb") as store:
+            ...   # ordinary ravendb client code
+
+Runnable walkthrough: `labs/01-embedded-zero-config.md <labs/01-embedded-zero-config.md>`_.
+
+Run without installing .NET
+---------------------------
+
+On locked-down hosts or minimal CI images where you do not want a system .NET, bring a
+**self-contained** RavenDB build (it bundles its own runtime). Point the server at the extracted
+``Server`` folder: the driver detects the bundled runtime and launches the server's native
+apphost directly, never calling ``dotnet``.
+
+.. code-block:: python
+
+    from ravendb_embedded import EmbeddedServer, ServerOptions
+
+    options = ServerOptions()
+    options.with_external_server("/path/to/extracted/Server")   # a self-contained build
+
+    with EmbeddedServer() as server:
+        server.start_server(options)
+        with server.get_document_store("MyDb") as store:
+            ...
+
+Download self-contained builds from the RavenDB downloads page (one archive per platform); the
+server files live in the archive's ``Server/`` folder. Runnable walkthrough:
+`labs/02-embedded-external-server.md <labs/02-embedded-external-server.md>`_. An exploratory
+helper that downloads and caches a build on first use is in
+`labs/04-on-demand-server.md <labs/04-on-demand-server.md>`_.
+
+Don't manage a server at all (tests)
+-------------------------------------
+
+For test suites that should not touch .NET or embedded startup, ``ravendb-test-driver`` can
+attach to a RavenDB you run yourself (Docker, testcontainers, a shared CI service) while still
+giving each test its own database. See the ``ravendb-python-testdriver`` repository.
+
+=============
+Configuration
+=============
+
+``ServerOptions``
+-----------------
+
+Create ``ServerOptions()`` and set attributes:
+
+- ``data_directory``: where database data is stored (defaults to a local ``RavenDB`` folder).
+- ``server_url``: the URL to bind (defaults to localhost on a free port).
+- ``dot_net_path``: path to ``dotnet`` when it is not on ``PATH`` (ignored on the self-contained path).
+- ``command_line_args``: extra `server command-line arguments <https://ravendb.net/docs/article-page/latest/csharp/server/configuration/command-line-arguments>`_.
+- ``framework_version``: pin an exact .NET version (advanced; leave empty to autodetect the installed runtime).
 
 Security
 --------
 
-You can secure ``ravendb-embedded`` using the ``secured()`` method:
+Secure the server with ``ServerOptions.secured()``:
 
 .. code-block:: python
 
-    secured(server_pfx_certificate_path, client_pem_certificate_path, server_pfx_certificate_password=None, ca_certificate_path=None)
+    options = ServerOptions()
+    options.secured(
+        server_pfx_certificate_path,      # server certificate (.pfx), required
+        client_pem_certificate_path,      # client certificate (.pem)
+        server_pfx_certificate_password=None,
+        ca_certificate_path=None,
+    )
 
-- Provide the path to ``.pfx`` and ``.pem`` files, and optionally a password and CA certificate file.
-- Minimal setup requires both a ``.pfx`` server and a ``.pem`` client certificate.
+Working with data
+-----------------
 
-Get Document Store
-------------------
+``get_document_store(database_name)`` returns a ``DocumentStore`` you use like any RavenDB
+client. For finer control, build a ``DatabaseOptions`` (via ``DatabaseOptions.from_database_name``)
+and call ``get_document_store_from_options``; set ``skip_creating_database=True`` to not
+auto-create the database.
 
-After initializing and starting the server, you can use the ``get_document_store`` method to obtain a ``DocumentStore`` and start working with RavenDB as usual.
+Call ``open_studio_in_browser()`` to open RavenDB Studio in your default browser.
 
-``get_document_store`` method can take either just the ``database_name`` or ``DatabaseOptions``.
+====
+Labs
+====
 
-DatabaseOptions
----------------
-
-- ``database_name``: The name of the database.
-- ``skip_creating_database``: ``get_document_store`` will create a new database if it does not exist. If this option is set to True, the database won't be created (Default False).
-
-Open RavenDB Studio in the Browser
------------------------------------
-
-To open RavenDB Studio from ``ravendb-embedded``, use the ``open_studio_in_browser`` method, and the studio will open automatically in your default browser.
+The ``labs/`` folder holds runnable, self-checking guides, one per usage case above. Start at
+`labs/README.md <labs/README.md>`_.
