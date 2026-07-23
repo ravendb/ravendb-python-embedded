@@ -125,7 +125,8 @@ Configuration
 
 Create ``ServerOptions()`` and set attributes:
 
-- ``data_directory``: where database data is stored (defaults to a local ``RavenDB`` folder).
+- ``data_directory``: where database data is stored (defaults to a local ``RavenDB`` folder). Set a
+  stable path for data that outlives the process, see `labs/05-embedded-persistent.md <labs/05-embedded-persistent.md>`_.
 - ``server_url``: the URL to bind (defaults to localhost on a free port).
 - ``dot_net_path``: path to ``dotnet`` when it is not on ``PATH`` (ignored on the self-contained path).
 - ``command_line_args``: extra `server command-line arguments <https://ravendb.net/docs/article-page/latest/csharp/server/configuration/command-line-arguments>`_.
@@ -145,6 +146,9 @@ Secure the server with ``ServerOptions.secured()``:
         server_pfx_certificate_password=None,
         ca_certificate_path=None,
     )
+
+Runnable example (HTTPS + client-certificate auth):
+`labs/04-embedded-secured.md <labs/04-embedded-secured.md>`_.
 
 Working with data
 -----------------

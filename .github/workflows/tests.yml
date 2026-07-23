@@ -57,6 +57,12 @@ jobs:
       - name: Run Lab 01 (embedded zero-config)
         run: python labs/01_embedded_zero_config.py
 
+      - name: Run Lab 04 (secured embedded)
+        run: python labs/04_embedded_secured.py
+
+      - name: Run Lab 05 (persistent data directory)
+        run: python labs/05_embedded_persistent.py
+
   self-contained:
     # Path B: external self-contained server -> runs the native apphost, no system .NET.
     # We do not set up .NET; the lab uses a bogus dot_net_path so a successful run proves the
