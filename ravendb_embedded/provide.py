@@ -48,7 +48,6 @@ class ExtractFromZipServerProvider(ProvideRavenDBServer):
         self.source_location = source_location
 
     def provide(self, target_directory):
-        # Ensure the target directory exists
         os.makedirs(target_directory, exist_ok=True)
         with open(self.source_location, "rb") as zip_file:
             self.unzip(zip_file, target_directory)
@@ -63,15 +62,12 @@ class ExtractFromPkgResourceServerProvider(ProvideRavenDBServer):
     def provide(self, target_directory):
         resource_name = "ravendb_server.zip"
 
-        # Get binary data from the resource
         resource_data = pkgutil.get_data(self.__class__.__module__, resource_name)
 
         if resource_data is None:
             raise RuntimeError(f"Unable to find resource: {resource_name}")
 
-        # Create a bytes buffer from the binary data
         with BytesIO(resource_data) as bytes_buffer:
-            # Call the unzip method to extract contents to the target directory
             ExtractFromZipServerProvider.unzip(bytes_buffer.read(), target_directory)
 
 
@@ -93,11 +89,8 @@ class ExternalServerProvider(ProvideRavenDBServer):
             self.inner_provider = ExtractFromZipServerProvider(server_location)
             return
 
-        # A directory can be a self-contained build (bundled runtime, run the native apphost
-        # directly) or a framework-dependent build (run via a system `dotnet`). Check
-        # self-contained first: a self-contained dir also contains Raven.Server.dll, so the
-        # old "look for the .dll" heuristic would misclassify it as framework-dependent and
-        # fall back to `dotnet`, needing a system .NET.
+        # Check self-contained first: it also ships Raven.Server.dll, so a .dll-first check
+        # would misroute it to `dotnet` and force a system .NET install.
         if os.path.isdir(file_server_location):
             if self._is_self_contained(file_server_location):
                 self.is_single_file_app = True
@@ -115,10 +108,8 @@ class ExternalServerProvider(ProvideRavenDBServer):
 
     @staticmethod
     def _is_self_contained(directory: str) -> bool:
-        # A self-contained server bundles the .NET runtime, so it runs via its native apphost
-        # (Raven.Server[.exe]) with no system `dotnet`. The reliable marker is
-        # `includedFrameworks` in the runtime config; otherwise treat a single-file publish
-        # (apphost present, no managed .dll) as self-contained too.
+        # Self-contained marker: `includedFrameworks` in the runtime config, or an apphost
+        # present with no managed .dll.
         runtime_config = os.path.join(directory, "Raven.Server.runtimeconfig.json")
         if os.path.isfile(runtime_config):
             try:

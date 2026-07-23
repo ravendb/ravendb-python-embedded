@@ -31,8 +31,7 @@ def main() -> None:
         options.target_server_location = str(Path(work, "server"))
         options.data_directory = str(Path(work, "data"))
         options.logs_path = str(Path(work, "logs"))
-        # Bogus on purpose: a self-contained build must never shell out to `dotnet`, so if the
-        # server still boots, we have proven the no-.NET path works.
+        # Bogus on purpose: a self-contained build must never call `dotnet`, so if it still boots the no-.NET path works.
         options.dot_net_path = "__no_dotnet__"
         options.with_external_server(SERVER)
 
