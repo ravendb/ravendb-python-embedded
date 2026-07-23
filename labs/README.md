@@ -7,7 +7,7 @@ portable. Each lab ships a script next to it, so you can run the exact code the 
 |-----|--------|--------------------|
 | [01](01-embedded-zero-config.md) | Embedded, zero-config (the default) | Yes (.NET 10 for 7.2.x) |
 | [02](02-embedded-external-server.md) | External self-contained server you provide | No |
-| [03](03-on-demand-server.md) | On-demand cached self-contained download (exploration) | No |
+| [03](03-on-demand-server.md) | On-demand cached self-contained download (no manual steps) | No |
 | [04](04-embedded-secured.md) | Secured embedded server (HTTPS + client certificate) | Yes |
 | [05](05-embedded-persistent.md) | Persistent data directory (data survives restarts) | Yes |
 

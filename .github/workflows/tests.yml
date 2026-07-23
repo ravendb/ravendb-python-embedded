@@ -92,3 +92,6 @@ jobs:
         run: |
           SERVER="$(find server -type d -name Server | head -1)"
           RAVENDB_SELF_CONTAINED_SERVER="$SERVER" python labs/02_embedded_external_server.py
+
+      - name: Run Lab 03 (on-demand cached self-contained, no system .NET)
+        run: python labs/03_on_demand_server.py

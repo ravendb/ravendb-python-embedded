@@ -6,7 +6,6 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from ravendb.exceptions.raven_exceptions import RavenException
 
-from ravendb_embedded.provide import ExternalServerProvider
 from ravendb_embedded.options import ServerOptions
 from ravendb_embedded.runtime_framework_version_matcher import (
     RuntimeFrameworkVersionMatcher,
@@ -25,7 +24,7 @@ class RavenServerRunner:
         if not options.logs_path.strip():
             raise ValueError("logs_path cannot be None or whitespace")
 
-        is_sfa = isinstance(options.provider, ExternalServerProvider) and options.provider.is_single_file_app
+        is_sfa = getattr(options.provider, "is_single_file_app", False)
         if is_sfa:
             # Self-contained / single-file build: run the native apphost, no `dotnet`.
             file_name = "Raven.Server.exe" if os.name == "nt" else "Raven.Server"

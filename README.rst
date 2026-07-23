@@ -105,9 +105,16 @@ apphost directly, never calling ``dotnet``.
 
 Download self-contained builds from the RavenDB downloads page (one archive per platform); the
 server files live in the archive's ``Server/`` folder. Runnable walkthrough:
-`labs/02-embedded-external-server.md <labs/02-embedded-external-server.md>`_. An exploratory
-helper that downloads and caches a build on first use is in
-`labs/03-on-demand-server.md <labs/03-on-demand-server.md>`_.
+`labs/02-embedded-external-server.md <labs/02-embedded-external-server.md>`_.
+
+Or skip the manual download and let the driver fetch and cache one for you on first use:
+
+.. code-block:: python
+
+    options = ServerOptions()
+    options.with_on_demand_server()   # downloads + caches a self-contained server, no .NET needed
+
+Walkthrough: `labs/03-on-demand-server.md <labs/03-on-demand-server.md>`_.
 
 Don't manage a server at all (tests)
 -------------------------------------
