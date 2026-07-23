@@ -1,4 +1,4 @@
-"""Lab 04 (exploration): on-demand, cached self-contained server download.
+"""Lab 03 (exploration): on-demand, cached self-contained server download.
 
 A Playwright-style acquisition prototype: fetch a self-contained RavenDB server for the current
 platform on first use, cache it, and reuse the cached copy next time (no re-download, no .NET).
@@ -78,7 +78,7 @@ def main():
                     session.store({"name": "on-demand"}, "people/1")
                     session.save_changes()
 
-    print("Lab 04 OK: downloaded + cached a self-contained server and ran it with no system .NET.")
+    print("Lab 03 OK: downloaded + cached a self-contained server and ran it with no system .NET.")
 
 
 if __name__ == "__main__":

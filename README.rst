@@ -107,7 +107,7 @@ Download self-contained builds from the RavenDB downloads page (one archive per 
 server files live in the archive's ``Server/`` folder. Runnable walkthrough:
 `labs/02-embedded-external-server.md <labs/02-embedded-external-server.md>`_. An exploratory
 helper that downloads and caches a build on first use is in
-`labs/04-on-demand-server.md <labs/04-on-demand-server.md>`_.
+`labs/03-on-demand-server.md <labs/03-on-demand-server.md>`_.
 
 Don't manage a server at all (tests)
 -------------------------------------

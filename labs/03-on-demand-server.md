@@ -1,4 +1,4 @@
-# Lab 04: On-demand, cached self-contained server (exploration)
+# Lab 03: On-demand, cached self-contained server (exploration)
 
 **Status:** exploration. This is NOT wired into the package default. It shows how a future
 "just works, no .NET" acquisition path could look, in the spirit of how Playwright fetches its
@@ -51,17 +51,24 @@ Because the downloaded build is self-contained, the run path is identical to Lab
 `ExternalServerProvider` sees `includedFrameworks` in the runtime config, runs the native
 apphost (`Raven.Server.exe` on Windows, `Raven.Server` elsewhere), and never calls `dotnet`.
 
-## Why it is only an exploration
+## Why pulling `latest` is fine (on purpose)
 
-- It downloads `latest` for a version line, so a run is only as reproducible as that endpoint.
-- A self-contained build is large (100 MB+), so the first-use cost and the cache footprint are
-  real; a shipped version would want checksums, a pinned build, and a documented cache location.
+Fetching the `latest` self-contained build for the version line is deliberate. A self-contained
+build bundles its own .NET runtime, so it does not have to match anything on the host: whatever
+`latest` returns is a server that just runs. There is no host .NET compatibility matrix to pin
+against, which is exactly what makes "grab latest and run" safe here (a framework-dependent build
+could not make that promise). The cache then freezes whatever you first pulled, so later runs stay
+stable without any extra pinning.
+
+## Why it is still only an exploration
+
+- A self-contained build is large (100 MB+), so the first-use download and the on-disk cache
+  footprint are real costs.
 - Making this the default changes the install story (a network fetch on first use) and needs a
-  decision on where the cache lives and how it is invalidated.
+  decision on where the cache lives, how big it may grow, and when it is invalidated.
 
 ## Takeaway
 
-The acquisition step from Lab 02 can be automated and cached, giving a no-.NET experience with
-no manual download. Shipping it as a default is a product decision, not a code gap: the
-mechanism works (this lab runs it), what is missing is the reproducibility and cache-policy
-guarantees a default would need.
+The acquisition step from Lab 02 can be automated and cached, giving a no-.NET experience with no
+manual download. The mechanism works (this lab runs it); making it the package default is a
+product decision about the install story and cache policy, not a code gap.
