@@ -13,7 +13,7 @@ from queue import Queue
 import webbrowser
 
 from ravendb import DocumentStore, CreateDatabaseOperation
-from ravendb.exceptions.raven_exceptions import RavenException
+from ravendb.exceptions.raven_exceptions import ConcurrencyException, RavenException
 from ravendb.tools.utils import Stopwatch
 from ravendb_embedded.options import ServerOptions, DatabaseOptions
 from ravendb_embedded.raven_server_runner import RavenServerRunner
@@ -99,12 +99,8 @@ class EmbeddedServer:
     def _try_create_database(self, options: DatabaseOptions, store: DocumentStore) -> None:
         try:
             store.maintenance.server.send(CreateDatabaseOperation(options.database_record))
-        except Exception as e:
-            # Expected behavior when the database already exists
-            if "conflict" in e.args[0] or "already exists" in e.args[0]:
-                self._log_debug(f"{options.database_record.database_name} already exists.")
-            else:
-                raise e
+        except ConcurrencyException:
+            self._log_debug(f"{options.database_record.database_name} already exists.")
 
     def get_server_uri(self) -> str:
         server = self.server_task
