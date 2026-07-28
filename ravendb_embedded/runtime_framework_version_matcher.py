@@ -33,7 +33,7 @@ class RuntimeFrameworkVersionMatcher:
             if runtime.match(version):
                 return str(version)
 
-        available_runtimes = "- ".join([str(r) for r in sorted_runtimes])
+        available_runtimes = "\n- ".join([str(r) for r in sorted_runtimes])
         raise RuntimeError(
             f"Could not find a matching runtime for '{runtime}'. Available runtimes:\n- {available_runtimes}"
         )
@@ -56,6 +56,7 @@ class RuntimeFrameworkVersionMatcher:
 
         process_command = [options.dot_net_path, "--info"]
         runtimes = []
+        process = None
 
         try:
             with subprocess.Popen(
@@ -86,7 +87,7 @@ class RuntimeFrameworkVersionMatcher:
         except Exception as e:
             raise RuntimeError("Unable to execute dotnet to retrieve list of installed runtimes") from e
         finally:
-            if process:
+            if process is not None and process.poll() is None:
                 process.kill()
         return runtimes
 

@@ -1,3 +1,5 @@
+import tempfile
+from pathlib import Path
 from unittest import TestCase
 
 from ravendb_embedded.options import ServerOptions
@@ -78,6 +80,7 @@ class TestRuntimeFrameworkVersionMatcher(TestCase):
             "Could not find a matching runtime for '3.1.4+'. Available runtimes:",
             str(context.exception),
         )
+        self.assertIn("\n- 5.0.4\n- 5.0.3\n- 5.0.0-rc.2.20475.17", str(context.exception))
 
         with self.assertRaises(RuntimeError) as context:
             RuntimeFrameworkVersion("6.0.0+-preview.6.21352.12")
@@ -99,6 +102,20 @@ class TestRuntimeFrameworkVersionMatcher(TestCase):
             "Cannot set 'minor' with value '1+' because '+' is not allowed.",
             str(context.exception),
         )
+
+    def test_missing_dotnet_preserves_execution_error(self):
+        with tempfile.TemporaryDirectory() as directory:
+            options = ServerOptions()
+            options.dot_net_path = str(Path(directory, "missing-dotnet"))
+
+            with self.assertRaises(RuntimeError) as context:
+                RuntimeFrameworkVersionMatcher.get_framework_versions(options)
+
+            self.assertEqual(
+                "Unable to execute dotnet to retrieve list of installed runtimes",
+                str(context.exception),
+            )
+            self.assertIsInstance(context.exception.__cause__, OSError)
 
     def get_runtimes(self):
         result = [
