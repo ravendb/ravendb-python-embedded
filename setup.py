@@ -46,7 +46,7 @@ setup(
     include_package_data=True,
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    version="7.2.5",
+    version="7.2.5.post1",
     description="RavenDB Embedded library to run RavenDB in an embedded way",
     author="RavenDB",
     author_email="support@ravendb.net",
@@ -57,6 +57,6 @@ setup(
         "ravendb==7.2.3.post1",
         "cryptography>=42.0.0",
     ],
-    license_files="LICENSE",
+    license_files=["LICENSE"],
     zip_safe=False,
 )
