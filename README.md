@@ -99,7 +99,7 @@ Or skip the manual download and let the driver fetch and cache one for you on fi
 
 ```python
 options = ServerOptions()
-options.with_on_demand_server()   # downloads + caches a self-contained server, no .NET needed
+options.with_auto_downloaded_server()   # downloads + caches a self-contained server, no .NET needed
 ```
 
 Walkthrough: [`labs/03-on-demand-server.md`](labs/03-on-demand-server.md).

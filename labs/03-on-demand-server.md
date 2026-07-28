@@ -1,7 +1,7 @@
 # Lab 03: On-demand, cached self-contained server (no .NET)
 
 **For:** the no-.NET experience of Lab 02 without downloading and extracting a server yourself.
-Call `with_on_demand_server()`; on first use the driver fetches a self-contained build for this
+Call `with_auto_downloaded_server()`; on first use the driver fetches a self-contained build for this
 platform, caches it, and reuses the cache from then on. A self-contained build bundles its own
 runtime, so the server runs its native apphost and never calls `dotnet`.
 
@@ -18,7 +18,7 @@ The complete example is [`03_on_demand_server.py`](03_on_demand_server.py). The 
 from ravendb_embedded import EmbeddedServer, ServerOptions
 
 options = ServerOptions()
-options.with_on_demand_server()   # download + cache a self-contained server on first use
+options.with_auto_downloaded_server()   # download + cache a self-contained server on first use
 
 with EmbeddedServer() as server:
     server.start_server(options)
@@ -26,7 +26,7 @@ with EmbeddedServer() as server:
         ...  # ordinary RavenDB client code, with no .NET on the machine
 ```
 
-`with_on_demand_server(version=None, cache_root=None)` defaults the version to the installed
+`with_auto_downloaded_server(version=None, cache_root=None)` defaults the version to the installed
 package's RavenDB line and caches under `~/.cache/ravendb-embedded`. Pass `cache_root` to point
 it at a directory your CI restores between runs.
 
@@ -47,5 +47,5 @@ provide the server) or Lab 01 (bundled server, needs .NET).
 
 ## Takeaway
 
-`with_on_demand_server()` gives the no-.NET path of Lab 02 with zero manual steps: one call, then
+`with_auto_downloaded_server()` gives the no-.NET path of Lab 02 with zero manual steps: one call, then
 ordinary client code.

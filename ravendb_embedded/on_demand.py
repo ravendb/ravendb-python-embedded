@@ -65,7 +65,7 @@ def ensure_server(version: str = None, cache_root: str = None) -> str:
     return str(server.parent)
 
 
-class OnDemandServerProvider(ProvideRavenDBServer):
+class AutoDownloadedServerProvider(ProvideRavenDBServer):
     """Download (once) and cache a self-contained server, then run it with no system .NET.
 
     The self-contained build bundles its own runtime, so the server runs via its native apphost;

@@ -1,7 +1,7 @@
 """Lab 03: On-demand, cached self-contained server (no manual download, no .NET).
 
 For: Lab 02 (no system .NET) without downloading and extracting a server yourself. Call
-`with_on_demand_server()`; on first use the driver fetches a self-contained build for this
+`with_auto_downloaded_server()`; on first use the driver fetches a self-contained build for this
 platform, caches it, and reuses the cache next time. Because the build is self-contained it runs
 its native apphost and never calls `dotnet`.
 
@@ -17,7 +17,7 @@ from ravendb_embedded import EmbeddedServer, ServerOptions
 def main() -> None:
     with tempfile.TemporaryDirectory() as work:
         options = ServerOptions()
-        options.with_on_demand_server()  # download + cache a self-contained server on first use
+        options.with_auto_downloaded_server()  # download + cache a self-contained server on first use
         options.target_server_location = str(Path(work, "server"))
         options.data_directory = str(Path(work, "data"))
         options.logs_path = str(Path(work, "logs"))

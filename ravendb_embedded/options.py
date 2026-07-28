@@ -14,7 +14,7 @@ from ravendb_embedded.provide import (
     ExternalServerProvider,
     CopyServerFromNugetProvider,
 )
-from ravendb_embedded.on_demand import OnDemandServerProvider
+from ravendb_embedded.on_demand import AutoDownloadedServerProvider
 
 
 class DatabaseOptions:
@@ -98,6 +98,6 @@ class ServerOptions:
     def with_external_server(self, server_location: str) -> None:
         self.provider = ExternalServerProvider(server_location)
 
-    def with_on_demand_server(self, version: str = None, cache_root: str = None) -> None:
+    def with_auto_downloaded_server(self, version: str = None, cache_root: str = None) -> None:
         # Download (once) and cache a self-contained server, then run it with no system .NET.
-        self.provider = OnDemandServerProvider(version, cache_root)
+        self.provider = AutoDownloadedServerProvider(version, cache_root)
