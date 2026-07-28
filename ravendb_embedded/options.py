@@ -93,8 +93,6 @@ class ServerOptions:
 
         return self
 
-    # todo: secured by cert exec and args
-
     def with_external_server(self, server_location: str) -> None:
         self.provider = ExternalServerProvider(server_location)
         # A directory is already a runnable server: run it in place, so we neither copy it nor

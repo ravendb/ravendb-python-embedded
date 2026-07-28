@@ -43,5 +43,7 @@ with EmbeddedServer() as server:
 ## Takeaway
 
 This is the most convenient path, but it buys a hard dependency on a system-wide .NET in a
-specific major version. If you would rather not manage .NET, use Lab 02 (external
-self-contained server) or Lab 03 (attach to a server you run yourself, e.g. via Docker).
+specific major version. If you would rather not manage .NET, use Lab 02 (a self-contained server
+you provide) or Lab 03 (one the package downloads and caches). To run RavenDB separately in Docker
+and give each test an isolated database, use the testdriver's
+[attach lab](https://github.com/ravendb/ravendb-python-testdriver/blob/v7.2/labs/01-attach-to-server.md).

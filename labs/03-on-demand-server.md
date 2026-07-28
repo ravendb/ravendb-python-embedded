@@ -30,14 +30,17 @@ with EmbeddedServer() as server:
 package's RavenDB line and caches under `~/.cache/ravendb-embedded`. Pass `cache_root` to point
 it at a directory your CI restores between runs.
 
-## Why pulling `latest` is fine (on purpose)
+## Version and host requirements
 
-Fetching the `latest` self-contained build for the version line is deliberate. A self-contained
-build bundles its own .NET runtime, so it does not have to match anything on the host: whatever
-`latest` returns is a server that just runs. There is no host .NET compatibility matrix to pin
-against, which is exactly what makes "grab latest and run" safe here (a framework-dependent build
-could not make that promise). The cache then freezes whatever you first pulled, so later runs stay
-stable without any extra pinning.
+The package fetches the latest self-contained build for the installed RavenDB version line. Its
+bundled runtime removes the host .NET compatibility matrix, and the cache keeps later runs on the
+same downloaded build.
+
+Automatic downloads support Windows x64/x86, Linux x64/ARM64, and macOS x64/ARM64. Unsupported
+targets fail with an explicit message instead of downloading a build for the wrong architecture.
+
+Normal RavenDB operating-system dependencies still apply. Standard Linux distributions and hosted
+CI images usually include them; minimal Linux images may need their distribution's ICU package.
 
 ## Cost to know about
 
@@ -45,7 +48,10 @@ The first use downloads a self-contained build (100 MB+) and the cache keeps it 
 run after that is offline and instant. If disk or first-run latency matters, prefer Lab 02 (you
 provide the server) or Lab 01 (bundled server, needs .NET).
 
+The cache is not refreshed automatically. To pick up a newer build from the same RavenDB line,
+remove that line's cache directory or use a new `cache_root`.
+
 ## Takeaway
 
-`with_auto_downloaded_server()` gives the no-.NET path of Lab 02 with zero manual steps: one call, then
-ordinary client code.
+`with_auto_downloaded_server()` gives the no-.NET path of Lab 02 without a manual server download:
+one call, then ordinary client code.
