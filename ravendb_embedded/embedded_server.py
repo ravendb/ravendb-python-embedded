@@ -75,7 +75,7 @@ class EmbeddedServer:
         store.trust_store_path = self.trust_store_path
         store.conventions = options.conventions
 
-        store.add_after_close(lambda: self.document_stores.pop(database_name))
+        store.add_after_close(lambda: self.document_stores.pop(database_name, None))
 
         store.initialize()
 
@@ -309,7 +309,7 @@ class EmbeddedServer:
         process = lazy.get_value()[1]
         self._shutdown_server_process(process)
 
-        for key, value in self.document_stores.items():
+        for value in list(self.document_stores.values()):
             if value.created:
                 value.get_value().close()
 

@@ -8,6 +8,25 @@ from tests import Person
 
 
 class BasicTest(TestCase):
+    def test_close_disposes_open_document_stores(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            embedded = EmbeddedServer()
+            server_options = ServerOptions()
+            server_options.data_directory = str(Path(temp_dir, "RavenDB"))
+            server_options.logs_path = str(Path(temp_dir, "Logs"))
+            server_options.provider = CopyServerFromNugetProvider()
+            embedded.start_server(server_options)
+
+            first = embedded.get_document_store("First")
+            second = embedded.get_document_store("Second")
+
+            embedded.close()
+
+            self.assertTrue(first.disposed)
+            self.assertTrue(second.disposed)
+            self.assertEqual({}, embedded.document_stores)
+            self.assertIsNone(embedded.server_task)
+
     def test_embedded(self):
         temp_dir = tempfile.mkdtemp()
         try:
