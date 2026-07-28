@@ -82,7 +82,7 @@ class RavenServerRunner:
                     cert_data = cert_file.read()
 
                 cert = x509.load_pem_x509_certificate(cert_data, default_backend())
-                thumbprint = cert.fingerprint(hashes.SHA256()).hex()
+                thumbprint = cert.fingerprint(hashes.SHA1()).hex().upper()
 
                 command_line_args.append(f"--Security.WellKnownCertificates.Admin={thumbprint}")
         else:
