@@ -21,8 +21,8 @@ def _default_version_line() -> str:
         return "7.2"
 
 
-def _platform_download() -> tuple:
-    machine = platform.machine().lower()
+def _platform_download_for(system: str, machine: str) -> tuple:
+    machine = machine.lower()
     if machine in ("amd64", "x86_64"):
         arch = "x64"
     elif machine in ("arm64", "aarch64"):
@@ -34,7 +34,6 @@ def _platform_download() -> tuple:
             f"Unsupported machine architecture for an automatic RavenDB download: {machine or 'unknown'}"
         )
 
-    system = platform.system()
     if system == "Windows":
         if arch == "arm64":
             raise RuntimeError(
@@ -51,6 +50,10 @@ def _platform_download() -> tuple:
             raise RuntimeError("Automatic RavenDB downloads do not provide a 32-bit Linux build.")
         return f"RavenDB for Linux {arch}", "tar.bz2"
     raise RuntimeError(f"Unsupported operating system for an automatic RavenDB download: {system or 'unknown'}")
+
+
+def _platform_download() -> tuple:
+    return _platform_download_for(platform.system(), platform.machine())
 
 
 def _extract_safely(archive: Path, dest: Path, extension: str) -> None:

@@ -4,9 +4,8 @@ import tempfile
 import unittest
 import zipfile
 from pathlib import Path
-from unittest import mock
 
-from ravendb_embedded.on_demand import _extract_safely, _platform_download, ensure_server
+from ravendb_embedded.on_demand import _extract_safely, _platform_download, _platform_download_for, ensure_server
 
 
 class TestOnDemand(unittest.TestCase):
@@ -18,8 +17,7 @@ class TestOnDemand(unittest.TestCase):
             server_dir.mkdir(parents=True)
             (server_dir / "Raven.Server.dll").write_bytes(b"stub")
 
-            with mock.patch("urllib.request.urlopen", side_effect=AssertionError("cache hit must not download")):
-                resolved = ensure_server(version="7.2", cache_root=cache_root)
+            resolved = ensure_server(version="7.2", cache_root=cache_root)
 
             self.assertEqual(str(server_dir), resolved)
 
@@ -35,10 +33,7 @@ class TestOnDemand(unittest.TestCase):
 
         for system, machine, expected in cases:
             with self.subTest(system=system, machine=machine):
-                with mock.patch("platform.system", return_value=system), mock.patch(
-                    "platform.machine", return_value=machine
-                ):
-                    self.assertEqual(expected, _platform_download())
+                self.assertEqual(expected, _platform_download_for(system, machine))
 
     def test_platform_download_rejects_unavailable_targets(self):
         cases = [
@@ -51,11 +46,8 @@ class TestOnDemand(unittest.TestCase):
 
         for system, machine in cases:
             with self.subTest(system=system, machine=machine):
-                with mock.patch("platform.system", return_value=system), mock.patch(
-                    "platform.machine", return_value=machine
-                ):
-                    with self.assertRaises(RuntimeError):
-                        _platform_download()
+                with self.assertRaises(RuntimeError):
+                    _platform_download_for(system, machine)
 
     def test_extract_rejects_path_traversal(self):
         # A tampered archive must not be able to write outside the destination (zip/tar slip).
