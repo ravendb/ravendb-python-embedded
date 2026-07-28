@@ -31,6 +31,7 @@ class EmbeddedServer:
         self.client_pem_certificate_path: Optional[str] = None
         self.trust_store_path: Optional[str] = None
         self._graceful_shutdown_timeout: Optional[timedelta] = None
+        self._process_kill_timeout: Optional[timedelta] = None
         self.logger = logging.Logger(self.__class__.__name__, logging.DEBUG)
 
     def __enter__(self):
@@ -47,6 +48,7 @@ class EmbeddedServer:
         options = options_param or ServerOptions()
 
         self._graceful_shutdown_timeout = options.graceful_shutdown_timeout
+        self._process_kill_timeout = options.process_kill_timeout
 
         start_server = Lazy(lambda: self._run_server(options))
 
@@ -115,29 +117,44 @@ class EmbeddedServer:
         if not process or process.poll() is not None:
             return
 
-        with process:
-            if process.poll() is not None:  # Check if the process has already terminated
-                return
+        graceful_timeout = (self._graceful_shutdown_timeout or timedelta(seconds=30)).total_seconds()
+        kill_timeout = (self._process_kill_timeout or timedelta(seconds=5)).total_seconds()
 
-            try:
-                self._log_debug("Try shutdown server gracefully.")
-                with process.stdin:
-                    process.stdin.write("shutdown no-confirmation\n".encode("utf-8"))
+        try:
+            self._log_debug("Trying to shut down the server gracefully.")
+            if process.stdin is None:
+                raise RuntimeError("The server process stdin is not available.")
 
-                if process.wait(self._graceful_shutdown_timeout.total_seconds()) == 0:
-                    return
+            process.stdin.write(b"shutdown no-confirmation\n")
+            process.stdin.flush()
+            process.wait(timeout=graceful_timeout)
+            return
+        except Exception as error:
+            self._log_debug(
+                f"Failed to gracefully shut down the server in {self._graceful_shutdown_timeout}. Error: {error}"
+            )
 
-            except Exception as e:
-                self._log_debug(
-                    f"Failed to gracefully shutdown server in {self._graceful_shutdown_timeout}. Error: {e}"
-                )
+        if process.poll() is not None:
+            return
 
-            try:
-                self._log_debug("Killing global server")
-                process.terminate()  # Use terminate() instead of kill()
-                process.wait()
-            except Exception as e:
-                self._log_debug(f"Failed to terminate server process. Error: {e}")
+        try:
+            self._log_debug("Terminating the server process.")
+            process.terminate()
+            process.wait(timeout=kill_timeout)
+            return
+        except subprocess.TimeoutExpired:
+            self._log_debug(f"The server did not terminate in {self._process_kill_timeout}; killing it.")
+        except Exception as error:
+            self._log_debug(f"Failed to terminate the server process. Error: {error}")
+
+        if process.poll() is not None:
+            return
+
+        try:
+            process.kill()
+            process.wait(timeout=kill_timeout)
+        except Exception as error:
+            self._log_debug(f"Failed to kill the server process in {self._process_kill_timeout}. Error: {error}")
 
     def _run_server(self, options: ServerOptions) -> Tuple[str, subprocess.Popen]:
         try:

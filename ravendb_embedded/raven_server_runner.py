@@ -100,7 +100,12 @@ class RavenServerRunner:
                 command_line_args.insert(1, framework_version)
                 command_line_args.insert(1, "--fx-version")
 
-        process_builder = subprocess.Popen(command_line_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process_builder = subprocess.Popen(
+            command_line_args,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
         process = process_builder
 
         return process

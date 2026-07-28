@@ -142,6 +142,7 @@ Create a `ServerOptions` instance before starting the server:
   [RavenDB server arguments](https://ravendb.net/docs/article-page/latest/csharp/server/configuration/command-line-arguments).
 - `framework_version`: an exact .NET runtime version for advanced bundled-server setups.
 - `graceful_shutdown_timeout`: how long to wait before terminating the child process.
+- `process_kill_timeout`: how long to wait for the process after terminating or killing it.
 - `max_server_startup_time_duration`: maximum server startup time.
 
 ### HTTPS and client certificates

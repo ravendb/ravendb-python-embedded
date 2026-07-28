@@ -53,6 +53,7 @@ class ServerOptions:
         self.accept_eula: bool = True
         self.server_url: Optional[str] = None
         self.graceful_shutdown_timeout: timedelta = timedelta(seconds=30)
+        self.process_kill_timeout: timedelta = timedelta(seconds=5)
         self.max_server_startup_time_duration: timedelta = timedelta(minutes=1)
         self.command_line_args: list[str] = list()
         self.security: Optional[SecurityOptions] = None
