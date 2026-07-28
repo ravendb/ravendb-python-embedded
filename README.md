@@ -1,9 +1,9 @@
 # ravendb-embedded
 
-`ravendb-embedded` runs a real RavenDB server from inside your Python program. You `pip install`
-it, start the server in-process, and talk to it with the normal `ravendb` client. There is no
-separate server to install, configure, or keep running: the server's lifetime follows your
-process.
+`ravendb-embedded` starts a real RavenDB server as a child process managed by your Python program.
+You `pip install` it, start the server, and talk to it with the normal `ravendb` client. There is
+no separate server to install, configure, or keep running: the server process's lifetime follows
+your Python process.
 
 Reach for it when you want:
 
@@ -95,14 +95,19 @@ Download the Server package for your platform from the [RavenDB downloads page](
 the server files live in the archive's `Server/` folder. Runnable walkthrough:
 [`labs/02-embedded-external-server.md`](labs/02-embedded-external-server.md).
 
-Or skip the manual download and let the driver fetch and cache one for you on first use:
+Or skip the manual download and let the package fetch and cache one for you on first use:
 
 ```python
 options = ServerOptions()
 options.with_auto_downloaded_server()   # downloads + caches a self-contained server, no .NET needed
 ```
 
+The package detects the host operating system and architecture at runtime, so the same Python
+configuration is portable across supported Windows, Linux, and macOS machines.
+
 Walkthrough: [`labs/03-on-demand-server.md`](labs/03-on-demand-server.md).
+Self-contained builds remove the system .NET requirement, but the normal RavenDB OS dependencies
+still apply. In particular, minimal Linux images may need their distribution's ICU package.
 
 ### Don't manage a server at all (tests)
 
@@ -153,5 +158,6 @@ Call `open_studio_in_browser()` to open RavenDB Studio in your default browser.
 
 ## Labs
 
-The `labs/` folder holds runnable, self-checking guides, one per usage case above. Start at
+The `labs/` folder holds runnable, self-checking guides, one per usage case above. The scripts live
+in this repository rather than in the installed wheel, so run them from a checkout. Start at
 [`labs/README.md`](labs/README.md).

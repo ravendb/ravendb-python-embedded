@@ -21,15 +21,39 @@ def _default_version_line() -> str:
         return "7.2"
 
 
-def _platform_download() -> tuple:
-    machine = platform.machine().lower()
-    arch = "arm64" if machine in ("arm64", "aarch64") else "x64"
-    system = platform.system()
+def _platform_download_for(system: str, machine: str) -> tuple:
+    machine = machine.lower()
+    if machine in ("amd64", "x86_64"):
+        arch = "x64"
+    elif machine in ("arm64", "aarch64"):
+        arch = "arm64"
+    elif machine in ("x86", "i386", "i686"):
+        arch = "x86"
+    else:
+        raise RuntimeError(
+            f"Unsupported machine architecture for an automatic RavenDB download: {machine or 'unknown'}"
+        )
+
     if system == "Windows":
+        if arch == "arm64":
+            raise RuntimeError(
+                "Automatic RavenDB downloads do not provide a Windows ARM64 build. "
+                "Use with_external_server() with a compatible server or attach to a separately running RavenDB."
+            )
         return f"RavenDB for Windows {arch}", "zip"
     if system == "Darwin":
-        return f"RavenDB for OSX {arch}", "tar.bz2"
-    return f"RavenDB for Linux {arch}", "tar.bz2"
+        if arch == "x86":
+            raise RuntimeError("Automatic RavenDB downloads do not provide a 32-bit macOS build.")
+        return f"RavenDB for MacOS {arch}", "tar.bz2"
+    if system == "Linux":
+        if arch == "x86":
+            raise RuntimeError("Automatic RavenDB downloads do not provide a 32-bit Linux build.")
+        return f"RavenDB for Linux {arch}", "tar.bz2"
+    raise RuntimeError(f"Unsupported operating system for an automatic RavenDB download: {system or 'unknown'}")
+
+
+def _platform_download() -> tuple:
+    return _platform_download_for(platform.system(), platform.machine())
 
 
 def _extract_safely(archive: Path, dest: Path, extension: str) -> None:
@@ -59,12 +83,11 @@ def _extract_safely(archive: Path, dest: Path, extension: str) -> None:
 def ensure_server(version: str = None, cache_root: str = None) -> str:
     """Return a local self-contained Server directory, downloading and caching on first use.
 
-    The download is a self-contained build (bundles its own .NET), so it runs with no system
-    .NET. Pulling `latest` for the version line is intentional: a self-contained build never has
-    to match anything on the host. A completed cache entry (keyed on version + platform) is reused
-    and never re-downloaded. Download and extraction happen in a private temp directory that is
-    moved into place only once complete, so an interrupted or concurrent first run never leaves a
-    half-populated cache.
+    The download is a self-contained build (bundles its own .NET), so it needs no system .NET.
+    Normal RavenDB operating-system dependencies still apply. A completed cache entry (keyed on
+    version + platform) is reused and never re-downloaded. Download and extraction happen in a
+    private temp directory that is moved into place only once complete, so an interrupted or
+    concurrent first run never leaves a half-populated cache.
     """
     version = version or _default_version_line()
     root = Path(cache_root) if cache_root else Path.home() / ".cache" / "ravendb-embedded"

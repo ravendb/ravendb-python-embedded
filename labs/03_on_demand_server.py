@@ -17,6 +17,7 @@ from ravendb_embedded import EmbeddedServer, ServerOptions
 def main() -> None:
     with tempfile.TemporaryDirectory() as work:
         options = ServerOptions()
+        options.dot_net_path = "__no_dotnet__"
         options.with_auto_downloaded_server()
         options.data_directory = str(Path(work, "data"))
         options.logs_path = str(Path(work, "logs"))

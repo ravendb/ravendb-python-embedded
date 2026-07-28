@@ -41,5 +41,7 @@ A framework-dependent build (only a `framework` reference, no bundled runtime) s
 
 ## Takeaway
 
-No .NET on the box, at the cost of fetching and caching the server build yourself. If you would
-rather not manage a server at all, run one in a container and attach to it: Lab 03.
+No .NET on the box, at the cost of providing and managing the server directory yourself. If you
+want the package to download and cache the self-contained server, use Lab 03. To run RavenDB in a
+container and attach test databases to it, use the testdriver's
+[attach lab](https://github.com/ravendb/ravendb-python-testdriver/blob/v7.2/labs/01-attach-to-server.md).

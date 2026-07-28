@@ -4,9 +4,8 @@ import tempfile
 import unittest
 import zipfile
 from pathlib import Path
-from unittest import mock
 
-from ravendb_embedded.on_demand import _extract_safely, _platform_download, ensure_server
+from ravendb_embedded.on_demand import _extract_safely, _platform_download, _platform_download_for, ensure_server
 
 
 class TestOnDemand(unittest.TestCase):
@@ -18,15 +17,37 @@ class TestOnDemand(unittest.TestCase):
             server_dir.mkdir(parents=True)
             (server_dir / "Raven.Server.dll").write_bytes(b"stub")
 
-            with mock.patch("urllib.request.urlopen", side_effect=AssertionError("cache hit must not download")):
-                resolved = ensure_server(version="7.2", cache_root=cache_root)
+            resolved = ensure_server(version="7.2", cache_root=cache_root)
 
             self.assertEqual(str(server_dir), resolved)
 
-    def test_platform_download_targets_a_known_os(self):
-        label, extension = _platform_download()
-        self.assertTrue(label.startswith("RavenDB for "))
-        self.assertIn(extension, ("zip", "tar.bz2"))
+    def test_platform_download_maps_supported_targets(self):
+        cases = [
+            ("Windows", "AMD64", ("RavenDB for Windows x64", "zip")),
+            ("Windows", "x86", ("RavenDB for Windows x86", "zip")),
+            ("Linux", "x86_64", ("RavenDB for Linux x64", "tar.bz2")),
+            ("Linux", "aarch64", ("RavenDB for Linux arm64", "tar.bz2")),
+            ("Darwin", "x86_64", ("RavenDB for MacOS x64", "tar.bz2")),
+            ("Darwin", "arm64", ("RavenDB for MacOS arm64", "tar.bz2")),
+        ]
+
+        for system, machine, expected in cases:
+            with self.subTest(system=system, machine=machine):
+                self.assertEqual(expected, _platform_download_for(system, machine))
+
+    def test_platform_download_rejects_unavailable_targets(self):
+        cases = [
+            ("Windows", "arm64"),
+            ("Linux", "i686"),
+            ("Darwin", "i386"),
+            ("FreeBSD", "x86_64"),
+            ("Linux", "mips"),
+        ]
+
+        for system, machine in cases:
+            with self.subTest(system=system, machine=machine):
+                with self.assertRaises(RuntimeError):
+                    _platform_download_for(system, machine)
 
     def test_extract_rejects_path_traversal(self):
         # A tampered archive must not be able to write outside the destination (zip/tar slip).

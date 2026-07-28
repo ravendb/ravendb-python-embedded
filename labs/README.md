@@ -3,6 +3,10 @@
 Runnable, self-checking guides for getting a RavenDB server, from most convenient to most
 portable. Each lab ships a script next to it, so you can run the exact code the guide shows.
 
+The scripts are part of this repository and are not installed into `site-packages`. Clone or
+download the repository first, then run the commands below from its root; `pip install` supplies
+the released library and server binaries used by the scripts.
+
 | Lab | Covers | Needs system .NET? |
 |-----|--------|--------------------|
 | [01](01-embedded-zero-config.md) | Embedded, zero-config (the default) | Yes (.NET 10 for 7.2.x) |

@@ -99,9 +99,7 @@ class EmbeddedServer:
             store.maintenance.server.send(CreateDatabaseOperation(options.database_record))
         except Exception as e:
             # Expected behavior when the database already exists
-            if (
-                "conflict" in e.args[0] or "already exists" in e.args[0]
-            ):  # todo: change exc type when python client will implement conflict handling
+            if "conflict" in e.args[0] or "already exists" in e.args[0]:
                 self._log_debug(f"{options.database_record.database_name} already exists.")
             else:
                 raise e
@@ -171,7 +169,7 @@ class EmbeddedServer:
         )
 
         if url_ref["value"] is None:
-            error_string = self.read_output(process.stderr, startup_duration, options, None)
+            error_string = self.read_output(process.stderr, Stopwatch.create_started(), options, None)
             self._shutdown_server_process(process)
             raise RuntimeError(self.build_startup_exception_message(output_string, error_string, process))
 
@@ -199,7 +197,7 @@ class EmbeddedServer:
             sb.append(output_string)
             sb.append(os.linesep)
 
-        sb.append("Check your ServerOptions, dotnet version, or run the command manually to see detailed error.")
+        sb.append("Check your ServerOptions and host dependencies, or run the command manually to see detailed error.")
         return "".join(sb)
 
     def online(
@@ -212,7 +210,7 @@ class EmbeddedServer:
         options: ServerOptions,
     ):
         if line is None:
-            error_string = self.read_output(process.stderr, startup_duration, options, None)
+            error_string = self.read_output(process.stderr, Stopwatch.create_started(), options, None)
             self._shutdown_server_process(process)
             raise RuntimeError(self.build_startup_exception_message("".join(builder), error_string, process))
 
@@ -261,6 +259,9 @@ class EmbeddedServer:
                 return "".join(sb)
 
             if line is None:
+                break
+
+            if line == self.END_OF_STREAM_MARKER:
                 break
 
             sb.append(line)
