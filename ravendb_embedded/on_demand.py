@@ -4,8 +4,6 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
-from ravendb_embedded.provide import CopyServerProvider, ProvideRavenDBServer
-
 _DOWNLOAD_BASE = "https://hibernatingrhinos.com/downloads"
 
 
@@ -63,19 +61,3 @@ def ensure_server(version: str = None, cache_root: str = None) -> str:
     if not server:
         raise RuntimeError(f"Server binaries not found under {target}")
     return str(server.parent)
-
-
-class AutoDownloadedServerProvider(ProvideRavenDBServer):
-    """Download (once) and cache a self-contained server, then run it with no system .NET.
-
-    The self-contained build bundles its own runtime, so the server runs via its native apphost;
-    `dot_net_path` is never used. The download happens on first `start_server()` and is cached.
-    """
-
-    def __init__(self, version: str = None, cache_root: str = None):
-        self.version = version
-        self.cache_root = cache_root
-        self.is_single_file_app = True
-
-    def provide(self, target_directory: str) -> None:
-        CopyServerProvider(ensure_server(self.version, self.cache_root)).provide(target_directory)

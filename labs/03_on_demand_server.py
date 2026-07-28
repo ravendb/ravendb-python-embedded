@@ -17,8 +17,7 @@ from ravendb_embedded import EmbeddedServer, ServerOptions
 def main() -> None:
     with tempfile.TemporaryDirectory() as work:
         options = ServerOptions()
-        options.with_auto_downloaded_server()  # download + cache a self-contained server on first use
-        options.target_server_location = str(Path(work, "server"))
+        options.with_auto_downloaded_server()
         options.data_directory = str(Path(work, "data"))
         options.logs_path = str(Path(work, "logs"))
 
