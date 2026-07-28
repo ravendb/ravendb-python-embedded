@@ -84,7 +84,6 @@ class ExternalServerProvider(ProvideRavenDBServer):
         if not os.path.exists(file_server_location):
             raise ValueError(f"Server location doesn't exist: {server_location}")
 
-        # Check if target is a file - assuming it is a zip file
         if os.path.isfile(file_server_location):
             self.inner_provider = ExtractFromZipServerProvider(server_location)
             return
