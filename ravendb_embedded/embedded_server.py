@@ -27,6 +27,9 @@ class EmbeddedServer:
     # singleton
     def __init__(self):
         self.server_task: Optional[Lazy[Tuple[str, subprocess.Popen]]] = None
+        self._server_options: Optional[ServerOptions] = None
+        self._lifecycle_lock = RLock()
+        self._exit_handler: Optional[Callable[[], None]] = None
         self.document_stores = {}
         self._document_stores_lock = RLock()
         self.client_pem_certificate_path: Optional[str] = None
@@ -48,21 +51,29 @@ class EmbeddedServer:
     def start_server(self, options_param: ServerOptions = None) -> None:
         options = options_param or ServerOptions()
 
-        self._graceful_shutdown_timeout = options.graceful_shutdown_timeout
-        self._process_kill_timeout = options.process_kill_timeout
+        with self._lifecycle_lock:
+            if self.server_task is not None:
+                raise RuntimeError("The server was already started")
 
-        start_server = Lazy(lambda: self._run_server(options))
+            self._server_options = options
+            self._graceful_shutdown_timeout = options.graceful_shutdown_timeout
+            self._process_kill_timeout = options.process_kill_timeout
 
-        if self.server_task and self.server_task.created and self.server_task != start_server:
-            raise RuntimeError("The server was already started")
+            start_server = Lazy(lambda: self._run_server(options))
+            self.server_task = start_server
 
-        self.server_task = start_server
+            if options.security is not None:
+                self.client_pem_certificate_path = options.security.client_pem_certificate_path
+                self.trust_store_path = options.security.ca_certificate_path
 
-        if options.security is not None:
-            self.client_pem_certificate_path = options.security.client_pem_certificate_path
-            self.trust_store_path = options.security.ca_certificate_path
-
-        start_server.get_value()
+            try:
+                start_server.get_value()
+            except Exception:
+                if self.server_task is start_server:
+                    self.server_task = None
+                    self._server_options = None
+                self._unregister_exit_handler()
+                raise
 
     def get_document_store(self, database: str) -> DocumentStore:
         return self.get_document_store_from_options(DatabaseOptions.from_database_name(database))
@@ -91,19 +102,22 @@ class EmbeddedServer:
 
     def get_document_store_from_options(self, options: DatabaseOptions) -> DocumentStore:
         database_name = options.database_record.database_name
-
         if not database_name or database_name.isspace():
             raise ValueError("DatabaseName cannot be null or whitespace")
 
-        self._log_debug(f"Creating document store for '{database_name}'.")
+        with self._lifecycle_lock:
+            if self.server_task is None:
+                raise RuntimeError("Please run start_server() before trying to use the server.")
 
-        with self._document_stores_lock:
-            lazy = self.document_stores.get(database_name)
-            if lazy is None:
-                lazy = Lazy(lambda: self._initialize_document_store(database_name, options))
-                self.document_stores[database_name] = lazy
+            self._log_debug(f"Creating document store for '{database_name}'.")
 
-        return lazy.get_value()
+            with self._document_stores_lock:
+                lazy = self.document_stores.get(database_name)
+                if lazy is None:
+                    lazy = Lazy(lambda: self._initialize_document_store(database_name, options))
+                    self.document_stores[database_name] = lazy
+
+            return lazy.get_value()
 
     def _try_create_database(self, options: DatabaseOptions, store: DocumentStore) -> None:
         try:
@@ -112,54 +126,83 @@ class EmbeddedServer:
             self._log_debug(f"{options.database_record.database_name} already exists.")
 
     def get_server_uri(self) -> str:
-        server = self.server_task
-        if server is None:
-            raise RuntimeError("Please run start_server() before trying to use the server.")
+        with self._lifecycle_lock:
+            server = self.server_task
+            if server is None:
+                raise RuntimeError("Please run start_server() before trying to use the server.")
 
-        return server.get_value()[0]
+            return server.get_value()[0]
 
     def _shutdown_server_process(self, process: subprocess.Popen) -> None:
-        if not process or process.poll() is not None:
-            return
-
-        graceful_timeout = (self._graceful_shutdown_timeout or timedelta(seconds=30)).total_seconds()
-        kill_timeout = (self._process_kill_timeout or timedelta(seconds=5)).total_seconds()
-
-        try:
-            self._log_debug("Trying to shut down the server gracefully.")
-            if process.stdin is None:
-                raise RuntimeError("The server process stdin is not available.")
-
-            process.stdin.write(b"shutdown no-confirmation\n")
-            process.stdin.flush()
-            process.wait(timeout=graceful_timeout)
-            return
-        except Exception as error:
-            self._log_debug(
-                f"Failed to gracefully shut down the server in {self._graceful_shutdown_timeout}. Error: {error}"
-            )
-
-        if process.poll() is not None:
+        if not process:
             return
 
         try:
-            self._log_debug("Terminating the server process.")
-            process.terminate()
-            process.wait(timeout=kill_timeout)
-            return
-        except subprocess.TimeoutExpired:
-            self._log_debug(f"The server did not terminate in {self._process_kill_timeout}; killing it.")
-        except Exception as error:
-            self._log_debug(f"Failed to terminate the server process. Error: {error}")
+            if process.poll() is not None:
+                return
 
-        if process.poll() is not None:
-            return
+            graceful_timeout = (self._graceful_shutdown_timeout or timedelta(seconds=30)).total_seconds()
+            kill_timeout = (self._process_kill_timeout or timedelta(seconds=5)).total_seconds()
 
-        try:
-            process.kill()
-            process.wait(timeout=kill_timeout)
-        except Exception as error:
-            self._log_debug(f"Failed to kill the server process in {self._process_kill_timeout}. Error: {error}")
+            try:
+                self._log_debug("Trying to shut down the server gracefully.")
+                if process.stdin is None:
+                    raise RuntimeError("The server process stdin is not available.")
+
+                process.stdin.write(b"shutdown no-confirmation\n")
+                process.stdin.flush()
+                process.wait(timeout=graceful_timeout)
+                return
+            except Exception as error:
+                self._log_debug(
+                    f"Failed to gracefully shut down the server in {self._graceful_shutdown_timeout}. Error: {error}"
+                )
+
+            if process.poll() is not None:
+                return
+
+            try:
+                self._log_debug("Terminating the server process.")
+                process.terminate()
+                process.wait(timeout=kill_timeout)
+                return
+            except subprocess.TimeoutExpired:
+                self._log_debug(f"The server did not terminate in {self._process_kill_timeout}; killing it.")
+            except Exception as error:
+                self._log_debug(f"Failed to terminate the server process. Error: {error}")
+
+            if process.poll() is not None:
+                return
+
+            try:
+                process.kill()
+                process.wait(timeout=kill_timeout)
+            except Exception as error:
+                self._log_debug(f"Failed to kill the server process in {self._process_kill_timeout}. Error: {error}")
+        finally:
+            if process.poll() is not None:
+                self._close_process_streams(process)
+
+    @staticmethod
+    def _close_process_streams(process: subprocess.Popen) -> None:
+        for stream in (process.stdin, process.stdout, process.stderr):
+            if stream is None or stream.closed:
+                continue
+            try:
+                stream.close()
+            except Exception:
+                pass
+
+    def _register_exit_handler(self, process: subprocess.Popen) -> None:
+        self._unregister_exit_handler()
+        self._exit_handler = lambda: self._shutdown_server_process(process)
+        atexit.register(self._exit_handler)
+
+    def _unregister_exit_handler(self) -> None:
+        if self._exit_handler is None:
+            return
+        atexit.unregister(self._exit_handler)
+        self._exit_handler = None
 
     def _run_server(self, options: ServerOptions) -> Tuple[str, subprocess.Popen]:
         try:
@@ -178,8 +221,6 @@ class EmbeddedServer:
 
         self._log_debug("Starting global server")
 
-        atexit.register(lambda: self._shutdown_server_process(process))
-
         url_ref: Dict[str, Optional[str]] = {"value": None}
         startup_duration = Stopwatch.create_started()
 
@@ -195,6 +236,7 @@ class EmbeddedServer:
             self._shutdown_server_process(process)
             raise RuntimeError(self.build_startup_exception_message(output_string, error_string, process))
 
+        self._register_exit_handler(process)
         return url_ref["value"], process
 
     @staticmethod
@@ -307,23 +349,28 @@ class EmbeddedServer:
             raise RuntimeError(e)
 
     def close(self):
-        lazy = self.server_task
-        if lazy is None or not lazy.created:
-            return
+        with self._lifecycle_lock:
+            lazy = self.server_task
+            if lazy is None or not lazy.created:
+                return
 
-        process = lazy.get_value()[1]
-        self._shutdown_server_process(process)
+            self.server_task = None
+            self._unregister_exit_handler()
+            process = lazy.get_value()[1]
+            self._shutdown_server_process(process)
 
-        with self._document_stores_lock:
-            stores = list(self.document_stores.values())
+            with self._document_stores_lock:
+                stores = list(self.document_stores.values())
 
-        for value in stores:
-            if value.created:
-                value.get_value().close()
+                for value in stores:
+                    if value.created:
+                        value.get_value().close()
 
-        with self._document_stores_lock:
-            self.document_stores.clear()
-        self.server_task = None
+                self.document_stores.clear()
+
+            self._server_options = None
+            self.client_pem_certificate_path = None
+            self.trust_store_path = None
 
 
 class Lazy(Generic[_T]):
