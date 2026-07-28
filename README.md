@@ -182,6 +182,17 @@ Use `get_server_process_id()` to inspect the child process. `stop_server()` stop
 disposing the `EmbeddedServer`, and `restart_server()` starts it again with the same options.
 Calling `close()` stops the process and disposes all document stores.
 
+Register a process-exit callback when the application needs to observe server failures:
+
+```python
+server.add_server_process_exited(
+    lambda event: print(event.process_id, event.exit_code, event.expected)
+)
+```
+
+Callbacks run on a background thread. `event.expected` is `True` for exits caused by
+`stop_server()`, `restart_server()`, or `close()`, and `False` when the child exits unexpectedly.
+
 ### Persistent data
 
 Set `data_directory` to a stable path when data should survive process restarts. Use a temporary

@@ -6,6 +6,7 @@ import queue
 import shutil
 import subprocess
 import time
+from dataclasses import dataclass
 from datetime import timedelta
 from typing import Optional, List, Callable, Tuple, Generic, TypeVar, Dict, IO
 from threading import Lock, RLock, Thread
@@ -21,6 +22,13 @@ from ravendb_embedded.raven_server_runner import RavenServerRunner
 _T = TypeVar("_T")
 
 
+@dataclass(frozen=True)
+class ServerProcessExitedEvent:
+    process_id: int
+    exit_code: int
+    expected: bool
+
+
 class EmbeddedServer:
     END_OF_STREAM_MARKER = "$$END_OF_STREAM$$"
 
@@ -30,6 +38,10 @@ class EmbeddedServer:
         self._server_options: Optional[ServerOptions] = None
         self._lifecycle_lock = RLock()
         self._exit_handler: Optional[Callable[[], None]] = None
+        self._process_exit_lock = RLock()
+        self._process_exit_callbacks: List[Callable[[ServerProcessExitedEvent], None]] = []
+        self._watched_processes = set()
+        self._expected_process_exits = set()
         self.document_stores = {}
         self._document_stores_lock = RLock()
         self.client_pem_certificate_path: Optional[str] = None
@@ -47,6 +59,18 @@ class EmbeddedServer:
     def _log_debug(self, message: str) -> None:
         if not self.logger.disabled and self.logger.isEnabledFor(logging.DEBUG):
             self.logger.log(logging.DEBUG, message)
+
+    def add_server_process_exited(self, callback: Callable[[ServerProcessExitedEvent], None]) -> None:
+        if not callable(callback):
+            raise ValueError("callback must be callable")
+        with self._process_exit_lock:
+            if callback not in self._process_exit_callbacks:
+                self._process_exit_callbacks.append(callback)
+
+    def remove_server_process_exited(self, callback: Callable[[ServerProcessExitedEvent], None]) -> None:
+        with self._process_exit_lock:
+            if callback in self._process_exit_callbacks:
+                self._process_exit_callbacks.remove(callback)
 
     def start_server(self, options_param: ServerOptions = None) -> None:
         options = options_param or ServerOptions()
@@ -182,6 +206,7 @@ class EmbeddedServer:
             if process.poll() is not None:
                 return
 
+            self._mark_process_exit_expected(process)
             graceful_timeout = (self._graceful_shutdown_timeout or timedelta(seconds=30)).total_seconds()
             kill_timeout = (self._process_kill_timeout or timedelta(seconds=5)).total_seconds()
 
@@ -239,6 +264,32 @@ class EmbeddedServer:
         self._exit_handler = lambda: self._shutdown_server_process(process)
         atexit.register(self._exit_handler)
 
+    def _watch_server_process(self, process: subprocess.Popen) -> None:
+        with self._process_exit_lock:
+            self._watched_processes.add(process.pid)
+
+        def watch():
+            exit_code = process.wait()
+            with self._process_exit_lock:
+                expected = process.pid in self._expected_process_exits
+                self._expected_process_exits.discard(process.pid)
+                self._watched_processes.discard(process.pid)
+                callbacks = list(self._process_exit_callbacks)
+
+            event = ServerProcessExitedEvent(process.pid, exit_code, expected)
+            for callback in callbacks:
+                try:
+                    callback(event)
+                except Exception as error:
+                    self._log_debug(f"Server process exit callback failed. Error: {error}")
+
+        Thread(target=watch, daemon=True, name=f"ravendb-process-{process.pid}").start()
+
+    def _mark_process_exit_expected(self, process: subprocess.Popen) -> None:
+        with self._process_exit_lock:
+            if process.pid in self._watched_processes:
+                self._expected_process_exits.add(process.pid)
+
     def _unregister_exit_handler(self) -> None:
         if self._exit_handler is None:
             return
@@ -278,6 +329,7 @@ class EmbeddedServer:
             raise RuntimeError(self.build_startup_exception_message(output_string, error_string, process))
 
         self._register_exit_handler(process)
+        self._watch_server_process(process)
         return url_ref["value"], process
 
     @staticmethod
