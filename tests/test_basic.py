@@ -1,5 +1,6 @@
 import shutil
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from unittest import TestCase
 
@@ -8,6 +9,21 @@ from tests import Person
 
 
 class BasicTest(TestCase):
+    def test_concurrent_calls_share_one_document_store(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with EmbeddedServer() as embedded:
+                server_options = ServerOptions()
+                server_options.data_directory = str(Path(temp_dir, "RavenDB"))
+                server_options.logs_path = str(Path(temp_dir, "Logs"))
+                server_options.provider = CopyServerFromNugetProvider()
+                embedded.start_server(server_options)
+
+                with ThreadPoolExecutor(max_workers=8) as executor:
+                    stores = list(executor.map(lambda _: embedded.get_document_store("Shared"), range(8)))
+
+                self.assertEqual(1, len({id(store) for store in stores}))
+                stores[0].close()
+
     def test_close_disposes_open_document_stores(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             embedded = EmbeddedServer()

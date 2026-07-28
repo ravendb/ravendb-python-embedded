@@ -8,7 +8,7 @@ import subprocess
 import time
 from datetime import timedelta
 from typing import Optional, List, Callable, Tuple, Generic, TypeVar, Dict, IO
-from threading import Thread
+from threading import Lock, RLock, Thread
 from queue import Queue
 import webbrowser
 
@@ -28,6 +28,7 @@ class EmbeddedServer:
     def __init__(self):
         self.server_task: Optional[Lazy[Tuple[str, subprocess.Popen]]] = None
         self.document_stores = {}
+        self._document_stores_lock = RLock()
         self.client_pem_certificate_path: Optional[str] = None
         self.trust_store_path: Optional[str] = None
         self._graceful_shutdown_timeout: Optional[timedelta] = None
@@ -75,7 +76,11 @@ class EmbeddedServer:
         store.trust_store_path = self.trust_store_path
         store.conventions = options.conventions
 
-        store.add_after_close(lambda: self.document_stores.pop(database_name, None))
+        def remove_store():
+            with self._document_stores_lock:
+                self.document_stores.pop(database_name, None)
+
+        store.add_after_close(remove_store)
 
         store.initialize()
 
@@ -92,9 +97,13 @@ class EmbeddedServer:
 
         self._log_debug(f"Creating document store for '{database_name}'.")
 
-        lazy = Lazy(lambda: self._initialize_document_store(database_name, options))
+        with self._document_stores_lock:
+            lazy = self.document_stores.get(database_name)
+            if lazy is None:
+                lazy = Lazy(lambda: self._initialize_document_store(database_name, options))
+                self.document_stores[database_name] = lazy
 
-        return self.document_stores.setdefault(database_name, lazy).get_value()
+        return lazy.get_value()
 
     def _try_create_database(self, options: DatabaseOptions, store: DocumentStore) -> None:
         try:
@@ -305,11 +314,15 @@ class EmbeddedServer:
         process = lazy.get_value()[1]
         self._shutdown_server_process(process)
 
-        for value in list(self.document_stores.values()):
+        with self._document_stores_lock:
+            stores = list(self.document_stores.values())
+
+        for value in stores:
             if value.created:
                 value.get_value().close()
 
-        self.document_stores.clear()
+        with self._document_stores_lock:
+            self.document_stores.clear()
         self.server_task = None
 
 
@@ -318,13 +331,17 @@ class Lazy(Generic[_T]):
         self.func = func
         self._value = None
         self._created = False
+        self._lock = Lock()
 
     def get_value(self) -> _T:
         if not self._created:
-            self._value = self.func()
-            self._created = True
+            with self._lock:
+                if not self._created:
+                    self._value = self.func()
+                    self._created = True
         return self._value
 
     @property
     def created(self):
-        return self._created
+        with self._lock:
+            return self._created
