@@ -101,6 +101,7 @@ class ServerOptions:
         # collide with the bundled server sitting at the default target location.
         if os.path.isdir(server_location):
             self.target_server_location = server_location
+            self.clear_target_server_location = False  # never wipe the user's own server directory
 
     def with_auto_downloaded_server(self, version: str = None, cache_root: str = None) -> None:
         # Download (once) and cache a self-contained server, then run it with no system .NET.

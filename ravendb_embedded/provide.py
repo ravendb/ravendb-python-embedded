@@ -20,6 +20,8 @@ class CopyServerProvider(ProvideRavenDBServer):
         self.server_files = server_files
 
     def provide(self, target_directory: str) -> None:
+        if os.path.abspath(self.server_files) == os.path.abspath(target_directory):
+            return  # already in place: run the server where it is, nothing to copy
         try:
             shutil.copytree(self.server_files, target_directory)
         except FileExistsError:
