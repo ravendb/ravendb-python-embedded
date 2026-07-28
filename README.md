@@ -102,6 +102,9 @@ options = ServerOptions()
 options.with_auto_downloaded_server()   # downloads + caches a self-contained server, no .NET needed
 ```
 
+The package detects the host operating system and architecture at runtime, so the same Python
+configuration is portable across supported Windows, Linux, and macOS machines.
+
 Walkthrough: [`labs/03-on-demand-server.md`](labs/03-on-demand-server.md).
 Self-contained builds remove the system .NET requirement, but the normal RavenDB OS dependencies
 still apply. In particular, minimal Linux images may need their distribution's ICU package.

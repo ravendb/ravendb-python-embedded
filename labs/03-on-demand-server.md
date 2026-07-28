@@ -5,6 +5,10 @@ Call `with_auto_downloaded_server()`; on first use the driver fetches a self-con
 platform, caches it, and reuses the cache from then on. A self-contained build bundles its own
 runtime, so the server runs its native apphost and never calls `dotnet`.
 
+The operating system and architecture are detected at runtime. The same Python code therefore
+works across supported Windows, Linux, and macOS developer machines and CI runners without
+per-platform server paths.
+
 ## Run it
 
 ```bash
@@ -53,5 +57,5 @@ remove that line's cache directory or use a new `cache_root`.
 
 ## Takeaway
 
-`with_auto_downloaded_server()` gives the no-.NET path of Lab 02 without a manual server download:
-one call, then ordinary client code.
+`with_auto_downloaded_server()` gives the no-.NET path of Lab 02 without a manual server download
+or per-platform configuration: one call, then ordinary client code.
