@@ -1,3 +1,4 @@
+import json
 import os
 import pkgutil
 import shutil
@@ -19,6 +20,8 @@ class CopyServerProvider(ProvideRavenDBServer):
         self.server_files = server_files
 
     def provide(self, target_directory: str) -> None:
+        if os.path.abspath(self.server_files) == os.path.abspath(target_directory):
+            return  # already in place: run the server where it is, nothing to copy
         try:
             shutil.copytree(self.server_files, target_directory)
         except FileExistsError:
@@ -47,7 +50,6 @@ class ExtractFromZipServerProvider(ProvideRavenDBServer):
         self.source_location = source_location
 
     def provide(self, target_directory):
-        # Ensure the target directory exists
         os.makedirs(target_directory, exist_ok=True)
         with open(self.source_location, "rb") as zip_file:
             self.unzip(zip_file, target_directory)
@@ -62,15 +64,12 @@ class ExtractFromPkgResourceServerProvider(ProvideRavenDBServer):
     def provide(self, target_directory):
         resource_name = "ravendb_server.zip"
 
-        # Get binary data from the resource
         resource_data = pkgutil.get_data(self.__class__.__module__, resource_name)
 
         if resource_data is None:
             raise RuntimeError(f"Unable to find resource: {resource_name}")
 
-        # Create a bytes buffer from the binary data
         with BytesIO(resource_data) as bytes_buffer:
-            # Call the unzip method to extract contents to the target directory
             ExtractFromZipServerProvider.unzip(bytes_buffer.read(), target_directory)
 
 
@@ -87,30 +86,50 @@ class ExternalServerProvider(ProvideRavenDBServer):
         if not os.path.exists(file_server_location):
             raise ValueError(f"Server location doesn't exist: {server_location}")
 
-        # Check if target is a file - assuming it is a zip file
         if os.path.isfile(file_server_location):
             self.inner_provider = ExtractFromZipServerProvider(server_location)
             return
 
-        # Alternatively, it might be a directory - look for Raven.Server.exe inside
-        if os.path.isdir(file_server_location) and os.path.exists(
-            os.path.join(file_server_location, self.SERVER_DLL_FILENAME)
-        ):
-            self.inner_provider = CopyServerProvider(server_location)
-            return
+        # Check self-contained first: it also ships Raven.Server.dll, so a .dll-first check
+        # would misroute it to `dotnet` and force a system .NET install.
+        if os.path.isdir(file_server_location):
+            if self._is_self_contained(file_server_location):
+                self.is_single_file_app = True
+                self.inner_provider = CopyServerProvider(server_location)
+                return
 
-        # Also look for Single File App file - Raven.Server
-        if os.path.isdir(file_server_location) and os.path.exists(
-            os.path.join(file_server_location, self.SERVER_SFA_FILENAME)
-        ):
-            self.is_single_file_app = True
-            self.inner_provider = CopyServerProvider(server_location)
-            return
+            if os.path.exists(os.path.join(file_server_location, self.SERVER_DLL_FILENAME)):
+                self.inner_provider = CopyServerProvider(server_location)
+                return
 
         raise ValueError(
             f"Unable to find RavenDB server (expected directory with {self.SERVER_DLL_FILENAME}) or zip file. "
             f"Used directory = {server_location}"
         )
+
+    @staticmethod
+    def _is_self_contained(directory: str) -> bool:
+        # Self-contained marker: `includedFrameworks` in the runtime config, or an apphost
+        # present with no managed .dll.
+        runtime_config = os.path.join(directory, "Raven.Server.runtimeconfig.json")
+        if os.path.isfile(runtime_config):
+            try:
+                with open(runtime_config, encoding="utf-8") as config_file:
+                    runtime_options = json.load(config_file).get("runtimeOptions", {})
+                if runtime_options.get("includedFrameworks"):
+                    return True
+            except (OSError, ValueError):
+                pass
+
+        has_managed_dll = os.path.exists(os.path.join(directory, ExternalServerProvider.SERVER_DLL_FILENAME))
+        has_apphost = any(
+            os.path.exists(os.path.join(directory, name))
+            for name in (
+                ExternalServerProvider.SERVER_SFA_FILENAME,
+                f"{ExternalServerProvider.SERVER_SFA_FILENAME}.exe",
+            )
+        )
+        return has_apphost and not has_managed_dll
 
     def provide(self, target_directory: str) -> None:
         self.inner_provider.provide(target_directory)

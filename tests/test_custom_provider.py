@@ -6,7 +6,7 @@ from unittest import TestCase
 from ravendb_embedded.embedded_server import EmbeddedServer
 from ravendb_embedded.options import ServerOptions, DatabaseOptions
 from ravendb_embedded.provide import CopyServerFromNugetProvider
-from tests import Person, pin_framework_version
+from tests import Person
 
 
 class TestCustomProvider(TestCase):
@@ -16,7 +16,6 @@ class TestCustomProvider(TestCase):
         server_options.data_directory = str(Path(temp_dir, "RavenDB"))
         server_options.logs_path = str(Path(temp_dir, "Logs"))
         server_options.command_line_args = ["--Features.Availability=Experimental"]
-        pin_framework_version(server_options)
         return server_options
 
     def test_can_use_zip_as_external_server_source(self):

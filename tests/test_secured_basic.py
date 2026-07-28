@@ -6,7 +6,7 @@ from unittest import TestCase
 from ravendb_embedded.embedded_server import EmbeddedServer
 from ravendb_embedded.options import ServerOptions, DatabaseOptions
 from ravendb_embedded.provide import CopyServerFromNugetProvider
-from tests import Person, pin_framework_version
+from tests import Person
 from tests.certificates import generate_self_signed_certificates
 
 
@@ -21,7 +21,6 @@ class TestSecuredBasic(TestCase):
                 server_options.data_directory = str(Path(temp_dir, "RavenDB"))
                 server_options.logs_path = str(Path(temp_dir, "Logs"))
                 server_options.provider = CopyServerFromNugetProvider()
-                pin_framework_version(server_options)
                 embedded.start_server(server_options)
 
                 database_options = DatabaseOptions.from_database_name("Test")

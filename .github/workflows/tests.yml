@@ -9,30 +9,27 @@ on:
 
 jobs:
   test:
+    # Path A: embedded framework-dependent server -> needs a system .NET. The 7.2 server
+    # targets net10.0 (7.1 was net8.0), so we install .NET 10 explicitly and assert the
+    # bundled server really needs it (no more green-by-luck on a preinstalled runtime).
     runs-on: ${{ matrix.os }}
-    env:
-      # .NET 8 (the server's target) is exercised by default resolution; .NET 10 must be
-      # forced since runners preinstall .NET 8 and would otherwise win. tests/pin_framework_version.
-      RAVENDB_TEST_FRAMEWORK_VERSION: ${{ matrix.dotnet == '10.0' && '10.0.x' || '' }}
     strategy:
       fail-fast: false
-      # Latest Python only (the ravendb client requires 3.10+); full OS x .NET matrix.
       matrix:
         os: [ubuntu-latest, windows-latest]
-        dotnet: ["8.0", "10.0"]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.13"
 
-      - name: Set up .NET ${{ matrix.dotnet }}
-        uses: actions/setup-dotnet@v4
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
-          dotnet-version: ${{ matrix.dotnet }}
+          dotnet-version: "10.0"
 
       - name: Install package
         run: |
@@ -44,12 +41,57 @@ jobs:
           pip install black
           black --check .
 
-      # Populates ravendb_embedded/target/nuget via the project's sdist hook (the server the
-      # tests copy from). setuptools is installed explicitly; modern virtualenvs omit it.
+      # Downloads + unpacks the bundled (framework-dependent) server into
+      # ravendb_embedded/target/nuget. setuptools is installed explicitly; modern venvs omit it.
       - name: Fetch bundled RavenDB server
         run: |
           pip install setuptools wheel
           python setup.py sdist
 
+      - name: Assert CI .NET matches the server's required runtime
+        run: python scripts/check_dotnet_requirement.py
+
       - name: Run tests
         run: python -m unittest discover -s tests
+
+      - name: Run Lab 01 (embedded zero-config)
+        run: python labs/01_embedded_zero_config.py
+
+      - name: Run Lab 04 (secured embedded)
+        run: python labs/04_embedded_secured.py
+
+      - name: Run Lab 05 (persistent data directory)
+        run: python labs/05_embedded_persistent.py
+
+  self-contained:
+    # Path B: external self-contained server -> runs the native apphost, no system .NET.
+    # We do not set up .NET; the lab uses a bogus dot_net_path so a successful run proves the
+    # apphost path is genuinely dotnet-free even though the runner happens to ship a .NET.
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.13"
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Download a self-contained RavenDB server
+        run: |
+          curl -fsSL -o ravendb.tar.bz2 "https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?version=7.2"
+          mkdir server
+          tar xjf ravendb.tar.bz2 -C server
+
+      - name: Run Lab 02 (self-contained, no system .NET)
+        run: |
+          SERVER="$(find server -type d -name Server | head -1)"
+          RAVENDB_SELF_CONTAINED_SERVER="$SERVER" python labs/02_embedded_external_server.py
+
+      - name: Run Lab 03 (on-demand cached self-contained, no system .NET)
+        run: python labs/03_on_demand_server.py

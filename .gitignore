@@ -3,6 +3,7 @@
 /dist
 /ravendb_embedded.egg-info
 /ravendb_embedded/target
+/ravendb_embedded/RavenDB
 *.pyc
 *.log
 *.raven-topology

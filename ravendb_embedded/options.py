@@ -14,6 +14,7 @@ from ravendb_embedded.provide import (
     ExternalServerProvider,
     CopyServerFromNugetProvider,
 )
+from ravendb_embedded.on_demand import ensure_server
 
 
 class DatabaseOptions:
@@ -96,3 +97,12 @@ class ServerOptions:
 
     def with_external_server(self, server_location: str) -> None:
         self.provider = ExternalServerProvider(server_location)
+        # A directory is already a runnable server: run it in place, so we neither copy it nor
+        # collide with the bundled server sitting at the default target location.
+        if os.path.isdir(server_location):
+            self.target_server_location = server_location
+            self.clear_target_server_location = False  # never wipe the user's own server directory
+
+    def with_auto_downloaded_server(self, version: str = None, cache_root: str = None) -> None:
+        # Download (once) and cache a self-contained server, then run it with no system .NET.
+        self.with_external_server(ensure_server(version, cache_root))
