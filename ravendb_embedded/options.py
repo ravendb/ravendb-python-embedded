@@ -94,6 +94,29 @@ class ServerOptions:
 
         return self
 
+    def secured_with_certificate_exec(
+        self,
+        certificate_exec: str,
+        certificate_arguments: str,
+        client_pem_certificate_path: str,
+        ca_certificate_path: str = None,
+    ) -> "ServerOptions":
+        if certificate_exec is None:
+            raise ValueError("certificate_exec cannot be None")
+        if certificate_arguments is None:
+            raise ValueError("certificate_arguments cannot be None")
+        if client_pem_certificate_path is None:
+            raise ValueError("client_pem_certificate_path cannot be None")
+        if self.security is not None:
+            raise RuntimeError("The security has already been set up for this ServerOptions object")
+
+        self.security = SecurityOptions()
+        self.security.certificate_exec = certificate_exec
+        self.security.certificate_arguments = certificate_arguments
+        self.security.client_pem_certificate_path = client_pem_certificate_path
+        self.security.ca_certificate_path = ca_certificate_path
+        return self
+
     def with_external_server(self, server_location: str) -> None:
         self.provider = ExternalServerProvider(server_location)
         # A directory is already a runnable server: run it in place, so we neither copy it nor

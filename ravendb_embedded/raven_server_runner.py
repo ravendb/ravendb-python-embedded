@@ -73,8 +73,8 @@ class RavenServerRunner:
             elif options.security.certificate_exec:
                 command_line_args.extend(
                     [
-                        f"--Security.Certificate.Exec={options.security.certificate_exec}",
-                        f"--Security.Certificate.Exec.Arguments={options.security.certificate_arguments}",
+                        f"--Security.Certificate.Load.Exec={options.security.certificate_exec}",
+                        f"--Security.Certificate.Load.Exec.Arguments={options.security.certificate_arguments}",
                     ]
                 )
             if options.security.client_pem_certificate_path:

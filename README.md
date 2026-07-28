@@ -161,6 +161,19 @@ options.secured(
 
 The returned `DocumentStore` receives the client certificate and custom CA automatically.
 
+When another process supplies the server certificate, use `secured_with_certificate_exec()`:
+
+```python
+options.secured_with_certificate_exec(
+    certificate_exec="python",
+    certificate_arguments='"load_certificate.py" "server.pfx"',
+    client_pem_certificate_path="client.pem",
+    ca_certificate_path="ca.crt",
+)
+```
+
+The certificate command must write the PFX bytes to standard output.
+
 Runnable walkthrough: [Lab 04 — secured embedded server](labs/04-embedded-secured.md).
 
 ### Persistent data
