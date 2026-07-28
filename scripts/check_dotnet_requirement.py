@@ -30,19 +30,27 @@ def required_dotnet_major(runtime_config: Path) -> str:
     return options.get("tfm", "").removeprefix("net").split(".")[0]  # e.g. "net10.0" -> "10"
 
 
-def main() -> object:
+def main() -> int:
     if not RUNTIME_CONFIG.exists():
-        return f"Server runtimeconfig not found at {RUNTIME_CONFIG}; fetch the server first (python setup.py sdist)."
+        print(f"Server runtimeconfig not found at {RUNTIME_CONFIG}; fetch the server first (python setup.py sdist).")
+        return 1
 
     major = required_dotnet_major(RUNTIME_CONFIG)
     if not major:
-        return f"Could not determine the required .NET version from {RUNTIME_CONFIG}."
+        print(f"Could not determine the required .NET version from {RUNTIME_CONFIG}.")
+        return 1
 
-    installed = subprocess.run(["dotnet", "--list-runtimes"], capture_output=True, text=True).stdout
+    try:
+        installed = subprocess.run(["dotnet", "--list-runtimes"], capture_output=True, text=True).stdout
+    except FileNotFoundError:
+        print(f"No 'dotnet' found on PATH; the bundled server requires .NET major {major}.")
+        return 1
+
     matched = f"Microsoft.NETCore.App {major}." in installed
     print(f"Bundled server requires .NET major {major}; matching runtime installed: {matched}")
     if not matched:
-        return f"Installed .NET runtimes do not include major {major}, which the bundled server requires."
+        print(f"Installed .NET runtimes do not include major {major}, which the bundled server requires.")
+        return 1
     return 0
 
 
