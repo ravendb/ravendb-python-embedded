@@ -133,6 +133,47 @@ class EmbeddedServer:
 
             return server.get_value()[0]
 
+    def get_server_process_id(self) -> int:
+        with self._lifecycle_lock:
+            server = self._require_started_server("get_server_process_id")
+            return server.get_value()[1].pid
+
+    def stop_server(self) -> None:
+        with self._lifecycle_lock:
+            server = self._require_started_server("stop_server")
+            self._unregister_exit_handler()
+            self._shutdown_server_process(server.get_value()[1])
+
+    def restart_server(self) -> None:
+        with self._lifecycle_lock:
+            existing_server = self._require_started_server("restart_server")
+            options = self._server_options
+
+            self._unregister_exit_handler()
+            try:
+                self._shutdown_server_process(existing_server.get_value()[1])
+            except Exception:
+                pass
+
+            if self.server_task is not existing_server:
+                raise RuntimeError("The server changed while restarting it")
+
+            restarted_server = Lazy(lambda: self._run_server(options))
+            self.server_task = restarted_server
+            try:
+                restarted_server.get_value()
+            except Exception:
+                if self.server_task is restarted_server:
+                    self.server_task = None
+                self._unregister_exit_handler()
+                raise
+
+    def _require_started_server(self, operation: str) -> Lazy[Tuple[str, subprocess.Popen]]:
+        server = self.server_task
+        if self._server_options is None or server is None or not server.created:
+            raise RuntimeError(f"Cannot call {operation}() before calling start_server()")
+        return server
+
     def _shutdown_server_process(self, process: subprocess.Popen) -> None:
         if not process:
             return

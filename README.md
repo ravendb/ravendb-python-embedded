@@ -176,6 +176,12 @@ The certificate command must write the PFX bytes to standard output.
 
 Runnable walkthrough: [Lab 04 — secured embedded server](labs/04-embedded-secured.md).
 
+### Server lifecycle
+
+Use `get_server_process_id()` to inspect the child process. `stop_server()` stops RavenDB without
+disposing the `EmbeddedServer`, and `restart_server()` starts it again with the same options.
+Calling `close()` stops the process and disposes all document stores.
+
 ### Persistent data
 
 Set `data_directory` to a stable path when data should survive process restarts. Use a temporary
