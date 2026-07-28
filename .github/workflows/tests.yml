@@ -82,16 +82,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
 
-      - name: Download a self-contained RavenDB server
-        run: |
-          curl -fsSL -o ravendb.tar.bz2 "https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?version=7.2"
-          mkdir server
-          tar xjf ravendb.tar.bz2 -C server
+      - name: Resolve a self-contained RavenDB server
+        run: python -c "from ravendb_embedded.on_demand import ensure_server; print(ensure_server(cache_root='server-cache'))" > server-path.txt
 
       - name: Run Lab 02 (self-contained, no system .NET)
-        run: |
-          SERVER="$(find server -type d -name Server | head -1)"
-          RAVENDB_SELF_CONTAINED_SERVER="$SERVER" python labs/02_embedded_external_server.py
+        run: RAVENDB_SELF_CONTAINED_SERVER="$(cat server-path.txt)" python labs/02_embedded_external_server.py
 
   on-demand:
     runs-on: ${{ matrix.os }}
