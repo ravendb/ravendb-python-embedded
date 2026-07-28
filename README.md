@@ -1,163 +1,201 @@
 # ravendb-embedded
 
-`ravendb-embedded` starts a real RavenDB server as a child process managed by your Python program.
-You `pip install` it, start the server, and talk to it with the normal `ravendb` client. There is
-no separate server to install, configure, or keep running: the server process's lifetime follows
-your Python process.
+`ravendb-embedded` starts a real RavenDB server as a child process of your Python application.
+The server starts with your code, stops with it, and is accessed through the standard `ravendb`
+client.
 
-Reach for it when you want:
+Use it for local development, integration tests, or applications that should manage their own
+RavenDB process.
 
-- **Local development** without setting up a standalone RavenDB.
-- **Integration tests** against a real server instead of a mock (see also `ravendb-test-driver`).
-- **Small or self-contained apps** that ship the database alongside the code.
-
-```python
-from ravendb_embedded import EmbeddedServer
-
-with EmbeddedServer() as server:
-    server.start_server()
-    with server.get_document_store("Embedded") as store:
-        with store.open_session() as session:
-            session.store({"name": "Ayende"}, "people/1")
-            session.save_changes()
-```
-
-## Installation
+## Install
 
 ```bash
 pip install ravendb-embedded
 ```
 
-The install includes a copy of the RavenDB server binaries. Python 3.10+ is required.
+Python 3.10+ is required.
 
-## The .NET requirement (read this)
+## Quick start
 
-The bundled server is a .NET application, so a matching **.NET runtime** must be on the machine.
-The required version tracks the bundled server:
+The default mode uses the RavenDB binaries included in the wheel and a compatible system .NET
+runtime:
+
+```python
+from ravendb_embedded import EmbeddedServer, ServerOptions
+
+options = ServerOptions()
+options.data_directory = "./data/RavenDB"
+options.logs_path = "./logs/RavenDB"
+
+with EmbeddedServer() as server:
+    server.start_server(options)
+    with server.get_document_store("MyDatabase") as store:
+        with store.open_session() as session:
+            session.store({"name": "Ayende"}, "people/1")
+            session.save_changes()
+```
+
+## Choose how RavenDB runs
+
+| Mode | System .NET required? | Server lifecycle | Best for |
+|------|-----------------------|------------------|----------|
+| [Bundled server](#bundled-server-default) | Yes | Managed by the package | The simplest local setup |
+| [On-demand self-contained server](#on-demand-self-contained-server) | No | Downloaded, cached, and managed by the package | Portable developer and CI environments |
+| [Self-contained server you provide](#self-contained-server-you-provide) | No | Managed by the package | Offline or centrally controlled server artifacts |
+
+Only the bundled-server mode requires .NET to be installed on the machine running Python.
+
+### Bundled server (default)
+
+The wheel includes a framework-dependent RavenDB server. Its runtime requirement follows the
+RavenDB version:
 
 | `ravendb-embedded` version | Required runtime |
 |----------------------------|------------------|
 | 7.2.x                      | .NET 10          |
 | 7.1.x                      | .NET 8           |
 
-Check what is installed with `dotnet --list-runtimes` (look for `Microsoft.NETCore.App`). Because
-the requirement follows the bundled server, it can change on a minor upgrade, so re-check it when
-you bump versions.
+Run `dotnet --list-runtimes` and look for `Microsoft.NETCore.App`. Re-check this requirement when
+upgrading to a new RavenDB minor version.
 
-If the machine cannot or should not have .NET, use the self-contained path under
-[Run without installing .NET](#run-without-installing-net) below.
+Runnable walkthrough: [Lab 01 — embedded zero-config](labs/01-embedded-zero-config.md).
 
-## Usage
+### On-demand self-contained server
 
-The three sections below are the ways people actually use this package. Pick the one that matches
-your environment; each links to a runnable walkthrough in `labs/`.
-
-### Run it (the default, needs .NET)
-
-Start the server and get a document store. This is the zero-config path and uses the system .NET
-described above. Pass a `ServerOptions` when you want to control where data lives, the bind URL,
-and so on.
+For the same managed experience without installing .NET, let the package download a
+self-contained RavenDB build:
 
 ```python
 from ravendb_embedded import EmbeddedServer, ServerOptions
 
 options = ServerOptions()
-options.data_directory = "MYPATH/RavenDBDataDir"   # optional; defaults to a local RavenDB folder
+options.with_auto_downloaded_server()
+options.data_directory = "./data/RavenDB"
+options.logs_path = "./logs/RavenDB"
 
 with EmbeddedServer() as server:
     server.start_server(options)
-    with server.get_document_store("MyDb") as store:
-        ...   # ordinary ravendb client code
-```
-
-Runnable walkthrough: [`labs/01-embedded-zero-config.md`](labs/01-embedded-zero-config.md).
-
-### Run without installing .NET
-
-On locked-down hosts or minimal CI images where you do not want a system .NET, bring a
-**self-contained** RavenDB build (it bundles its own runtime). Point the server at the extracted
-`Server` folder: the driver detects the bundled runtime and launches the server's native apphost
-directly, never calling `dotnet`.
-
-```python
-from ravendb_embedded import EmbeddedServer, ServerOptions
-
-options = ServerOptions()
-options.with_external_server("/path/to/extracted/Server")   # a self-contained build
-
-with EmbeddedServer() as server:
-    server.start_server(options)
-    with server.get_document_store("MyDb") as store:
+    with server.get_document_store("MyDatabase") as store:
         ...
 ```
 
-Download the Server package for your platform from the [RavenDB downloads page](https://ravendb.net/downloads);
-the server files live in the archive's `Server/` folder. Runnable walkthrough:
-[`labs/02-embedded-external-server.md`](labs/02-embedded-external-server.md).
+The operating system and architecture are detected at runtime, so the same Python configuration
+is portable across:
 
-Or skip the manual download and let the package fetch and cache one for you on first use:
+- Windows x64 and x86
+- Linux x64 and ARM64
+- macOS x64 and ARM64
+
+Unsupported targets, including Windows ARM64, fail with an explicit error instead of downloading
+an incompatible build.
+
+The first run downloads a self-contained server (100 MB+) and caches it under
+`~/.cache/ravendb-embedded`. Later runs reuse that cache. Pass `cache_root` to
+`with_auto_downloaded_server()` when you want a different location:
 
 ```python
-options = ServerOptions()
-options.with_auto_downloaded_server()   # downloads + caches a self-contained server, no .NET needed
+options.with_auto_downloaded_server(cache_root="./.ravendb-cache")
 ```
 
-The package detects the host operating system and architecture at runtime, so the same Python
-configuration is portable across supported Windows, Linux, and macOS machines.
+By default, the download follows the installed package's RavenDB version line. The cache is not
+refreshed automatically; remove that version's cache directory when you intentionally want to
+resolve a newer server build from the same line.
 
-Walkthrough: [`labs/03-on-demand-server.md`](labs/03-on-demand-server.md).
-Self-contained builds remove the system .NET requirement, but the normal RavenDB OS dependencies
-still apply. In particular, minimal Linux images may need their distribution's ICU package.
+The wheel does not contain a self-contained build for every platform; it downloads only the build
+needed by the current machine. Self-contained mode removes the system .NET requirement, but normal
+RavenDB operating-system dependencies still apply. Minimal Linux images may need their
+distribution's ICU package.
 
-### Don't manage a server at all (tests)
+Runnable walkthrough: [Lab 03 — on-demand server](labs/03-on-demand-server.md).
 
-For test suites that should not touch .NET or embedded startup, `ravendb-test-driver` can attach
-to a RavenDB you run yourself (Docker, testcontainers, a shared CI service) while still giving
-each test its own database. See the
-[`ravendb-python-testdriver`](https://github.com/ravendb/ravendb-python-testdriver) repository.
+### Self-contained server you provide
+
+Download and extract the Server package for the target platform, then point the package at its
+`Server` directory:
+
+```python
+from ravendb_embedded import EmbeddedServer, ServerOptions
+
+options = ServerOptions()
+options.with_external_server("/path/to/extracted/Server")
+
+with EmbeddedServer() as server:
+    server.start_server(options)
+    with server.get_document_store("MyDatabase") as store:
+        ...
+```
+
+The native apphost is run directly, so `dotnet` is not called. Server packages are available on
+the [RavenDB downloads page](https://ravendb.net/downloads).
+
+Runnable walkthrough: [Lab 02 — external self-contained server](labs/02-embedded-external-server.md).
 
 ## Configuration
 
-### `ServerOptions`
+Create a `ServerOptions` instance before starting the server:
 
-Create `ServerOptions()` and set attributes:
+- `data_directory`: where database data is stored.
+- `logs_path`: where RavenDB writes its logs.
+- `server_url`: address to bind; the default uses localhost and a free port.
+- `dot_net_path`: path to `dotnet` for bundled mode when it is not on `PATH`.
+- `command_line_args`: additional
+  [RavenDB server arguments](https://ravendb.net/docs/article-page/latest/csharp/server/configuration/command-line-arguments).
+- `framework_version`: an exact .NET runtime version for advanced bundled-server setups.
+- `graceful_shutdown_timeout`: how long to wait before terminating the child process.
+- `max_server_startup_time_duration`: maximum server startup time.
 
-- `data_directory`: where database data is stored (defaults to a local `RavenDB` folder). Set a
-  stable path for data that outlives the process, see
-  [`labs/05-embedded-persistent.md`](labs/05-embedded-persistent.md).
-- `server_url`: the URL to bind (defaults to localhost on a free port).
-- `dot_net_path`: path to `dotnet` when it is not on `PATH` (ignored on the self-contained path).
-- `command_line_args`: extra [server command-line arguments](https://ravendb.net/docs/article-page/latest/csharp/server/configuration/command-line-arguments).
-- `framework_version`: pin an exact .NET version (advanced; leave empty to autodetect the installed runtime).
+### HTTPS and client certificates
 
-### Security
-
-Secure the server with `ServerOptions.secured()`:
+Use `ServerOptions.secured()` to start RavenDB over HTTPS:
 
 ```python
 options = ServerOptions()
 options.secured(
-    server_pfx_certificate_path,      # server certificate (.pfx), required
-    client_pem_certificate_path,      # client certificate (.pem)
-    server_pfx_certificate_password=None,
-    ca_certificate_path=None,
+    "server.pfx",
+    "client.pem",
+    server_pfx_certificate_password="",
+    ca_certificate_path="ca.crt",
 )
 ```
 
-Runnable example (HTTPS + client-certificate auth):
-[`labs/04-embedded-secured.md`](labs/04-embedded-secured.md).
+The returned `DocumentStore` receives the client certificate and custom CA automatically.
 
-### Working with data
+Runnable walkthrough: [Lab 04 — secured embedded server](labs/04-embedded-secured.md).
 
-`get_document_store(database_name)` returns a `DocumentStore` you use like any RavenDB client. For
-finer control, build a `DatabaseOptions` (via `DatabaseOptions.from_database_name`) and call
-`get_document_store_from_options`; set `skip_creating_database=True` to not auto-create the
-database.
+### Persistent data
 
-Call `open_studio_in_browser()` to open RavenDB Studio in your default browser.
+Set `data_directory` to a stable path when data should survive process restarts. Use a temporary
+directory for disposable tests.
+
+Runnable walkthrough: [Lab 05 — persistent data](labs/05-embedded-persistent.md).
+
+### Document stores
+
+`get_document_store(database_name)` returns a standard RavenDB `DocumentStore` and creates the
+database when needed. For finer control, create `DatabaseOptions` with
+`DatabaseOptions.from_database_name()` and call `get_document_store_from_options()`.
+
+Set `skip_creating_database=True` on `DatabaseOptions` when the database is managed elsewhere.
+Call `open_studio_in_browser()` to open RavenDB Studio.
 
 ## Labs
 
-The `labs/` folder holds runnable, self-checking guides, one per usage case above. The scripts live
-in this repository rather than in the installed wheel, so run them from a checkout. Start at
-[`labs/README.md`](labs/README.md).
+The repository contains runnable, self-checking examples:
+
+| Lab | Scenario | Needs system .NET? |
+|-----|----------|--------------------|
+| [01](labs/01-embedded-zero-config.md) | Bundled zero-config server | Yes |
+| [02](labs/02-embedded-external-server.md) | Self-contained server you provide | No |
+| [03](labs/03-on-demand-server.md) | Automatic platform detection, download, and cache | No |
+| [04](labs/04-embedded-secured.md) | HTTPS and client-certificate authentication | Yes |
+| [05](labs/05-embedded-persistent.md) | Data that survives server restarts | Yes |
+
+The scripts live in the repository rather than the installed wheel. Clone or download the
+repository, install the package, and run them from the repository root. See the
+[complete labs guide](labs/README.md).
+
+## Links
+
+- [PyPI](https://pypi.org/project/ravendb-embedded/)
+- [Source](https://github.com/ravendb/ravendb-python-embedded)
+- [RavenDB Python client documentation](https://ravendb.net/docs/article-page/latest/python)
