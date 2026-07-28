@@ -6,12 +6,9 @@ never calls `dotnet`.
 
 ## Get a self-contained server
 
-Download and extract a server build from ravendb.net (one per platform), for example:
-
-- Linux x64: `https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?version=7.2`
-- Windows x64: `https://hibernatingrhinos.com/downloads/RavenDB%20for%20Windows%20x64/latest?version=7.2`
-
-The server files live in the `Server/` subfolder of the extracted archive.
+Download the Server package for your platform from the RavenDB downloads page:
+<https://ravendb.net/downloads>. You get an archive; extract it, and the server files are in its
+`Server/` subfolder.
 
 ## Run it
 

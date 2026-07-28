@@ -4,10 +4,8 @@ For: machines or CI that do NOT have .NET installed. You bring a self-contained 
 server build (it bundles the .NET runtime), and the driver runs its native apphost directly,
 never calling `dotnet`.
 
-Get a self-contained server from ravendb.net downloads, for example:
-  Linux x64:   https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?version=7.2
-  Windows x64: https://hibernatingrhinos.com/downloads/RavenDB%20for%20Windows%20x64/latest?version=7.2
-Extract it; the server files live in the `Server/` subfolder.
+Get the Server package for your platform from the RavenDB downloads page
+(https://ravendb.net/downloads), extract it; the server files live in the `Server/` subfolder.
 
 Run:
   RAVENDB_SELF_CONTAINED_SERVER=/path/to/extracted/Server python labs/02_embedded_external_server.py

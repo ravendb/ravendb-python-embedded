@@ -91,8 +91,8 @@ with EmbeddedServer() as server:
         ...
 ```
 
-Download self-contained builds from the RavenDB downloads page (one archive per platform); the
-server files live in the archive's `Server/` folder. Runnable walkthrough:
+Download the Server package for your platform from the [RavenDB downloads page](https://ravendb.net/downloads);
+the server files live in the archive's `Server/` folder. Runnable walkthrough:
 [`labs/02-embedded-external-server.md`](labs/02-embedded-external-server.md).
 
 Or skip the manual download and let the driver fetch and cache one for you on first use:
