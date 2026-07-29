@@ -17,10 +17,13 @@ The complete, runnable example is [`01_embedded_zero_config.py`](01_embedded_zer
 The core is just:
 
 ```python
-from ravendb_embedded import EmbeddedServer
+from ravendb_embedded import EmbeddedServer, ServerOptions
+
+options = ServerOptions()
+options.accept_eula = True
 
 with EmbeddedServer() as server:
-    server.start_server()
+    server.start_server(options)
     with server.get_document_store("Lab") as store:
         with store.open_session() as session:
             session.store({"name": "Ayende"}, "people/1")
@@ -33,10 +36,10 @@ with EmbeddedServer() as server:
    server (`Raven.Server.dll`) that ships inside the wheel.
 2. `RavenServerRunner` launches it as **`dotnet Raven.Server.dll ...`**, using the `dotnet`
    found on your `PATH` (`ServerOptions.dot_net_path`).
-3. `ServerOptions.framework_version` is empty by default, so no `--fx-version` is passed and
-   standard .NET host resolution applies. The host does **not** roll forward across major
-   versions, which is why a net10.0 server hard-fails on a machine that only has .NET 8
-   (error: "You must install ... version 10.0.x").
+3. `ServerOptions.framework_version` defaults to `auto`. The package reads the bundled
+   `Raven.Server.runtimeconfig.json`, finds the required .NET line, and selects a compatible
+   installed patch. The host does **not** roll forward across major versions, which is why a
+   net10.0 server still requires .NET 10.
 4. The one exception: point the server at a **self-contained** build (an apphost
    `Raven.Server` with the runtime bundled) and it runs **without `dotnet`**. That is Lab 02.
 

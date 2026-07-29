@@ -165,6 +165,23 @@ Startup failures raise `ServerStartupError`. When the configured startup duratio
 more specific `ServerStartupTimeoutError` is raised. A failed start does not dispose the
 `EmbeddedServer`; correct the configuration and call `start_server()` on the same instance again.
 
+```python
+from datetime import timedelta
+
+from ravendb_embedded import EmbeddedServer, ServerOptions, ServerStartupTimeoutError
+
+options = ServerOptions()
+options.accept_eula = True
+options.max_server_startup_time_duration = timedelta(seconds=15)
+
+with EmbeddedServer() as server:
+    try:
+        server.start_server(options)
+    except ServerStartupTimeoutError:
+        options.max_server_startup_time_duration = timedelta(minutes=1)
+        server.start_server(options)
+```
+
 ### License and EULA
 
 The package never accepts the RavenDB EULA on your behalf. Review the
@@ -244,6 +261,21 @@ instances in the same Python process; give each instance a different `data_direc
 `logs_path`. Prefer `with EmbeddedServer() as server:` so the context manager always closes that
 instance's process and document stores.
 
+```python
+first_options = ServerOptions()
+first_options.accept_eula = True
+first_options.data_directory = "./servers/first"
+
+second_options = ServerOptions()
+second_options.accept_eula = True
+second_options.data_directory = "./servers/second"
+
+with EmbeddedServer() as first, EmbeddedServer() as second:
+    first.start_server(first_options)
+    second.start_server(second_options)
+    assert first.get_server_process_id() != second.get_server_process_id()
+```
+
 Register a process-exit callback when the application needs to observe server failures:
 
 ```python
@@ -254,6 +286,8 @@ server.add_server_process_exited(
 
 Callbacks run on a background thread. `event.expected` is `True` for exits caused by
 `stop_server()`, `restart_server()`, or `close()`, and `False` when the child exits unexpectedly.
+
+Runnable walkthrough: [Lab 06 — lifecycle and process monitoring](labs/06-embedded-lifecycle.md).
 
 ### Persistent data
 
@@ -287,6 +321,7 @@ The repository contains runnable, self-checking examples:
 | [03](labs/03-on-demand-server.md) | Automatic platform detection, download, and cache | No |
 | [04](labs/04-embedded-secured.md) | HTTPS and client-certificate authentication | Yes |
 | [05](labs/05-embedded-persistent.md) | Data that survives server restarts | Yes |
+| [06](labs/06-embedded-lifecycle.md) | Stop, restart, PID, and process-exit monitoring | Yes |
 
 The scripts live in the repository rather than the installed wheel. Clone or download the
 repository, install the package, and run them from the repository root. See the
