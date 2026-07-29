@@ -168,7 +168,8 @@ more specific `ServerStartupTimeoutError` is raised. A failed start does not dis
 ### License and EULA
 
 The package never accepts the RavenDB EULA on your behalf. Review the
-[RavenDB EULA](https://ravendb.net/legal/terms) and set `options.accept_eula = True` before
+[RavenDB EULA](https://ravendb.net/legal/ravendb/commercial-license-eula) and set
+`options.accept_eula = True` before
 starting RavenDB.
 
 Configure a license through `options.licensing`:
