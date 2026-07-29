@@ -82,7 +82,7 @@ def _download_from(base_url):
 
 class TestOnDemand(unittest.TestCase):
     def test_cache_hit_skips_download(self):
-        # A populated cache must be reused without any network call ("by design").
+        # A populated cache must be reused without any network call.
         with tempfile.TemporaryDirectory() as cache_root:
             label, _ = _platform_download()
             server_dir = Path(cache_root, "7.2", label.replace(" ", "_"), "Server")

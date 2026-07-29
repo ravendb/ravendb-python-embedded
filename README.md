@@ -207,7 +207,7 @@ The returned `DocumentStore` receives the client certificate and custom CA autom
 The client PEM must contain both its certificate and matching unencrypted private key. If the
 certificate declares Extended Key Usage, it must include TLS Client Authentication.
 
-The server PFX is deliberately not reused as a client certificate: a server-only certificate may
+The server PFX is not reused as a client certificate: a server-only certificate may
 not have Client Authentication EKU, and its PFX may not contain a suitable client identity. Supply
 the client PEM explicitly. `ca_certificate_path` is optional for certificates trusted by the
 operating system; provide a CA bundle for private or self-signed server certificates. These files
