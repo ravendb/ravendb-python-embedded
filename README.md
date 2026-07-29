@@ -145,6 +145,9 @@ Create a `ServerOptions` instance before starting the server:
 - `process_kill_timeout`: how long to wait for the process after terminating or killing it.
 - `max_server_startup_time_duration`: maximum server startup time.
 
+Startup failures raise `ServerStartupError`. When the configured startup duration expires, the
+more specific `ServerStartupTimeoutError` is raised.
+
 ### HTTPS and client certificates
 
 Use `ServerOptions.secured()` to start RavenDB over HTTPS:

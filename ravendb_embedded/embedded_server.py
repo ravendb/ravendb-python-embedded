@@ -21,6 +21,14 @@ from ravendb_embedded.raven_server_runner import RavenServerRunner
 _T = TypeVar("_T")
 
 
+class ServerStartupError(RuntimeError):
+    pass
+
+
+class ServerStartupTimeoutError(ServerStartupError):
+    pass
+
+
 @dataclass(frozen=True)
 class ServerProcessExitedEvent:
     process_id: int
@@ -310,10 +318,19 @@ class EmbeddedServer:
 
         self._log_debug("Starting global server")
 
-        server_url, output_string, error_string = self._wait_for_server_start(process, options)
+        server_url, output_string, error_string, timed_out = self._wait_for_server_start(process, options)
         if server_url is None:
             self._shutdown_server_process(process)
-            raise RuntimeError(self.build_startup_exception_message(output_string, error_string, process))
+            message = self.build_startup_exception_message(
+                output_string,
+                error_string,
+                process,
+                timed_out=timed_out,
+                startup_timeout=options.max_server_startup_time_duration,
+            )
+            if timed_out:
+                raise ServerStartupTimeoutError(message)
+            raise ServerStartupError(message)
 
         self._register_exit_handler(process)
         self._watch_server_process(process)
@@ -323,7 +340,7 @@ class EmbeddedServer:
         self,
         process: subprocess.Popen,
         options: ServerOptions,
-    ) -> Tuple[Optional[str], str, str]:
+    ) -> Tuple[Optional[str], str, str, bool]:
         output_events: Queue[Tuple[str, Optional[str]]] = Queue()
         startup_complete = Event()
 
@@ -353,7 +370,7 @@ class EmbeddedServer:
             while True:
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
-                    return None, self._join_output(stdout_lines), self._join_output(stderr_lines)
+                    return None, self._join_output(stdout_lines), self._join_output(stderr_lines), True
 
                 try:
                     stream_name, line = output_events.get(timeout=min(0.1, remaining))
@@ -363,13 +380,13 @@ class EmbeddedServer:
                 if line is None:
                     ended_streams.add(stream_name)
                     if len(ended_streams) == 2:
-                        return None, self._join_output(stdout_lines), self._join_output(stderr_lines)
+                        return None, self._join_output(stdout_lines), self._join_output(stderr_lines), False
                     continue
 
                 lines = stdout_lines if stream_name == "stdout" else stderr_lines
                 lines.append(line)
                 if stream_name == "stdout" and line.startswith(prefix):
-                    return line[len(prefix) :], self._join_output(stdout_lines), self._join_output(stderr_lines)
+                    return line[len(prefix) :], self._join_output(stdout_lines), self._join_output(stderr_lines), False
         finally:
             startup_complete.set()
 
@@ -378,8 +395,18 @@ class EmbeddedServer:
         return os.linesep.join(lines) + (os.linesep if lines else "")
 
     @staticmethod
-    def build_startup_exception_message(output_string: str, error_string: str, process: subprocess.Popen) -> str:
-        sb = ["Unable to start the RavenDB Server", os.linesep]
+    def build_startup_exception_message(
+        output_string: str,
+        error_string: str,
+        process: subprocess.Popen,
+        timed_out: bool = False,
+        startup_timeout: timedelta = None,
+    ) -> str:
+        if timed_out:
+            heading = f"Server failed to start in {startup_timeout.total_seconds()} seconds."
+        else:
+            heading = "Unable to start the RavenDB Server"
+        sb = [heading, os.linesep]
 
         if process.args:
             sb.append("Command:")

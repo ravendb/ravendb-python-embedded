@@ -4,10 +4,35 @@ from datetime import timedelta
 from pathlib import Path
 from unittest import TestCase
 
-from ravendb_embedded import EmbeddedServer, ServerOptions
+from ravendb_embedded import EmbeddedServer, ServerOptions, ServerStartupError, ServerStartupTimeoutError
 
 
 class TestStartupErrors(TestCase):
+    def test_startup_timeout_has_a_distinct_exception(self):
+        with tempfile.TemporaryDirectory() as directory:
+            server_directory = Path(directory, "Server")
+            server_directory.mkdir()
+            Path(server_directory, "Raven.Server.dll").write_text(
+                "import time\n"
+                "time.sleep(60)\n",
+                encoding="utf-8",
+            )
+
+            options = ServerOptions()
+            options.with_external_server(str(server_directory))
+            options.dot_net_path = sys.executable
+            options.data_directory = str(Path(directory, "data"))
+            options.logs_path = str(Path(directory, "logs"))
+            options.max_server_startup_time_duration = timedelta(milliseconds=200)
+            options.graceful_shutdown_timeout = timedelta(milliseconds=100)
+            options.process_kill_timeout = timedelta(seconds=1)
+
+            with EmbeddedServer() as server:
+                with self.assertRaises(ServerStartupTimeoutError) as context:
+                    server.start_server(options)
+
+            self.assertIn("Server failed to start in 0.2 seconds.", str(context.exception))
+
     def test_stderr_is_drained_before_and_after_server_is_online(self):
         with tempfile.TemporaryDirectory() as directory:
             server_directory = Path(directory, "Server")
@@ -60,7 +85,7 @@ class TestStartupErrors(TestCase):
             options.max_server_startup_time_duration = timedelta(seconds=10)
 
             with EmbeddedServer() as server:
-                with self.assertRaises(RuntimeError) as context:
+                with self.assertRaises(ServerStartupError) as context:
                     server.start_server(options)
 
             message = str(context.exception)
