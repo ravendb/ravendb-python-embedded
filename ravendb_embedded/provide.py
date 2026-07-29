@@ -56,7 +56,19 @@ class ExtractFromZipServerProvider(ProvideRavenDBServer):
 
     @staticmethod
     def unzip(source: Union[str, bytes], out: str) -> None:
+        if isinstance(source, bytes):
+            source = BytesIO(source)
+
+        destination = Path(out).resolve()
+
+        def is_inside_destination(name: str) -> bool:
+            resolved = (destination / name).resolve()
+            return resolved == destination or destination in resolved.parents
+
         with zipfile.ZipFile(source, "r") as zipped:
+            for name in zipped.namelist():
+                if not is_inside_destination(name):
+                    raise RuntimeError(f"Refusing to extract unsafe archive path: {name}")
             zipped.extractall(out)
 
 

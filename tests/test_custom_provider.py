@@ -1,15 +1,31 @@
+import io
 import shutil
 import tempfile
+import zipfile
 from pathlib import Path
 from unittest import TestCase
 
 from ravendb_embedded.embedded_server import EmbeddedServer
 from ravendb_embedded.options import ServerOptions, DatabaseOptions
-from ravendb_embedded.provide import CopyServerFromNugetProvider
+from ravendb_embedded.provide import CopyServerFromNugetProvider, ExtractFromZipServerProvider
 from tests import Person
 
 
 class TestCustomProvider(TestCase):
+    def test_external_zip_rejects_path_traversal(self):
+        archive = io.BytesIO()
+        with zipfile.ZipFile(archive, "w") as zipped:
+            zipped.writestr("../escaped.txt", "unsafe")
+
+        with tempfile.TemporaryDirectory() as temp_directory:
+            destination = Path(temp_directory, "server")
+            destination.mkdir()
+
+            with self.assertRaisesRegex(RuntimeError, "unsafe archive path"):
+                ExtractFromZipServerProvider.unzip(archive.getvalue(), str(destination))
+
+            self.assertFalse(Path(temp_directory, "escaped.txt").exists())
+
     @staticmethod
     def configure_server_options(temp_dir: str, server_options: ServerOptions) -> ServerOptions:
         server_options.accept_eula = True
