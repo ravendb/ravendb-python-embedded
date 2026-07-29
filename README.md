@@ -214,6 +214,10 @@ Use `get_server_process_id()` to inspect the child process. `stop_server()` stop
 disposing the `EmbeddedServer`, and `restart_server()` starts it again with the same options.
 Calling `close()` stops the process and disposes all document stores.
 
+`EmbeddedServer` is intentionally not a singleton. An application may run independent server
+instances in the same Python process; give each instance a different `data_directory` and
+`logs_path`. The context manager owns only its own process and document stores.
+
 Register a process-exit callback when the application needs to observe server failures:
 
 ```python

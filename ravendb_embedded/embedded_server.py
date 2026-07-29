@@ -37,7 +37,6 @@ class ServerProcessExitedEvent:
 
 
 class EmbeddedServer:
-    # singleton
     def __init__(self):
         self.server_task: Optional[Lazy[Tuple[str, subprocess.Popen]]] = None
         self._server_options: Optional[ServerOptions] = None
