@@ -53,7 +53,7 @@ class EmbeddedServer:
         self.trust_store_path: Optional[str] = None
         self._graceful_shutdown_timeout: Optional[timedelta] = None
         self._process_kill_timeout: Optional[timedelta] = None
-        self.logger = logging.Logger(self.__class__.__name__, logging.DEBUG)
+        self.logger = logging.getLogger(f"ravendb_embedded.{self.__class__.__name__}")
 
     def __enter__(self):
         return self
