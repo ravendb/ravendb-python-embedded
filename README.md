@@ -155,7 +155,8 @@ alias is deprecated and will be removed in a future release.
 - `max_server_startup_time_duration`: maximum server startup time.
 
 Startup failures raise `ServerStartupError`. When the configured startup duration expires, the
-more specific `ServerStartupTimeoutError` is raised.
+more specific `ServerStartupTimeoutError` is raised. A failed start does not dispose the
+`EmbeddedServer`; correct the configuration and call `start_server()` on the same instance again.
 
 ### License and EULA
 

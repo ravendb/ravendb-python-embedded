@@ -8,6 +8,39 @@ from ravendb_embedded import EmbeddedServer, ServerOptions, ServerStartupError, 
 
 
 class TestStartupErrors(TestCase):
+    def test_failed_start_can_be_retried_on_the_same_server(self):
+        with tempfile.TemporaryDirectory() as directory:
+            server_directory = Path(directory, "Server")
+            server_directory.mkdir()
+            first_attempt = Path(directory, "first-attempt")
+            Path(server_directory, "Raven.Server.dll").write_text(
+                "import pathlib\n"
+                "import sys\n"
+                f"marker = pathlib.Path({str(first_attempt)!r})\n"
+                "if not marker.exists():\n"
+                "    marker.touch()\n"
+                "    print('intentional first-start failure', file=sys.stderr, flush=True)\n"
+                "    raise SystemExit(1)\n"
+                "print('Server available on: http://127.0.0.1:12345', flush=True)\n"
+                "sys.stdin.readline()\n",
+                encoding="utf-8",
+            )
+
+            options = ServerOptions()
+            options.accept_eula = True
+            options.with_external_server(str(server_directory))
+            options.dot_net_path = sys.executable
+            options.framework_version = ""
+            options.data_directory = str(Path(directory, "data"))
+            options.logs_path = str(Path(directory, "logs"))
+
+            with EmbeddedServer() as server:
+                with self.assertRaises(ServerStartupError):
+                    server.start_server(options)
+
+                server.start_server(options)
+                self.assertEqual("http://127.0.0.1:12345", server.get_server_uri())
+
     def test_startup_timeout_has_a_distinct_exception(self):
         with tempfile.TemporaryDirectory() as directory:
             server_directory = Path(directory, "Server")
