@@ -103,7 +103,10 @@ class TestCustomProvider(TestCase):
     def test_can_use_default_nuget_provider(self):
         with tempfile.TemporaryDirectory() as temp_directory:
             with EmbeddedServer() as embedded:
-                options = self.configure_server_options(temp_directory, ServerOptions())
+                options = ServerOptions()
+                options.accept_eula = True
+                options.data_directory = str(Path(temp_directory, "RavenDB"))
+                options.logs_path = str(Path(temp_directory, "Logs"))
                 database_options = DatabaseOptions.from_database_name("Test")
                 embedded.start_server(options)
                 with embedded.get_document_store_from_options(database_options) as store:
