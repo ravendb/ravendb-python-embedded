@@ -430,12 +430,16 @@ class EmbeddedServer:
         return "".join(sb)
 
     def open_studio_in_browser(self):
-        server_url = self.get_server_uri()
+        studio_url = self._get_studio_url(self.get_server_uri())
 
         try:
-            webbrowser.open(server_url)
+            webbrowser.open(studio_url)
         except Exception as e:
             raise RuntimeError(e)
+
+    @staticmethod
+    def _get_studio_url(server_url: str) -> str:
+        return f"{server_url.rstrip('/')}/studio/index.html?disableAnalytics=true"
 
     def close(self):
         with self._lifecycle_lock:
