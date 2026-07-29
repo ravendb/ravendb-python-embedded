@@ -24,6 +24,7 @@ runtime:
 from ravendb_embedded import EmbeddedServer, ServerOptions
 
 options = ServerOptions()
+options.accept_eula = True  # Set only after reviewing the RavenDB EULA.
 options.data_directory = "./data/RavenDB"
 options.logs_path = "./logs/RavenDB"
 
@@ -69,6 +70,7 @@ self-contained RavenDB build:
 from ravendb_embedded import EmbeddedServer, ServerOptions
 
 options = ServerOptions()
+options.accept_eula = True
 options.with_auto_downloaded_server()
 options.data_directory = "./data/RavenDB"
 options.logs_path = "./logs/RavenDB"
@@ -117,6 +119,7 @@ Download and extract the Server package for the target platform, then point the 
 from ravendb_embedded import EmbeddedServer, ServerOptions
 
 options = ServerOptions()
+options.accept_eula = True
 options.with_external_server("/path/to/extracted/Server")
 
 with EmbeddedServer() as server:
@@ -136,6 +139,7 @@ Create a `ServerOptions` instance before starting the server:
 
 - `data_directory`: where database data is stored.
 - `logs_path`: where RavenDB writes its logs.
+- `accept_eula`: must be set to `True` explicitly after reviewing the RavenDB EULA.
 - `server_url`: address to bind; the default uses localhost and a free port.
 - `dot_net_path`: path to `dotnet` for bundled mode when it is not on `PATH`.
 - `command_line_args`: additional
@@ -150,12 +154,35 @@ Create a `ServerOptions` instance before starting the server:
 Startup failures raise `ServerStartupError`. When the configured startup duration expires, the
 more specific `ServerStartupTimeoutError` is raised.
 
+### License and EULA
+
+The package never accepts the RavenDB EULA on your behalf. Review the
+[RavenDB EULA](https://ravendb.net/legal/terms) and set `options.accept_eula = True` before
+starting RavenDB.
+
+Configure a license through `options.licensing`:
+
+```python
+options.licensing.license = '{"Id": "..."}'  # Inline license JSON
+# Or:
+options.licensing.license_path = "/path/to/license.json"
+
+options.licensing.disable_auto_update = True
+options.licensing.disable_auto_update_from_api = True
+options.licensing.disable_license_support_check = True
+options.licensing.throw_on_invalid_or_missing_license = True
+```
+
+The fail-fast option is useful in CI and production environments where falling back to an
+unlicensed server would hide a configuration problem.
+
 ### HTTPS and client certificates
 
 Use `ServerOptions.secured()` to start RavenDB over HTTPS:
 
 ```python
 options = ServerOptions()
+options.accept_eula = True
 options.secured(
     "server.pfx",
     "client.pem",

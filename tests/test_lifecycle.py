@@ -24,6 +24,7 @@ class TestLifecycle(TestCase):
     def test_stop_and_restart_real_server(self):
         with tempfile.TemporaryDirectory() as directory:
             options = ServerOptions()
+            options.accept_eula = True
             options.data_directory = str(Path(directory, "RavenDB"))
             options.logs_path = str(Path(directory, "Logs"))
             options.provider = CopyServerFromNugetProvider()

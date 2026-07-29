@@ -38,6 +38,16 @@ class SecurityOptions:
         self.certificate_arguments: Optional[str] = None
 
 
+class LicensingOptions:
+    def __init__(self):
+        self.license: Optional[str] = None
+        self.license_path: Optional[str] = None
+        self.disable_auto_update: bool = False
+        self.disable_auto_update_from_api: bool = False
+        self.disable_license_support_check: bool = True
+        self.throw_on_invalid_or_missing_license: bool = False
+
+
 class ServerOptions:
     BASE_MODULE_DIRECTORY = str(Path(__file__).parent)
     DEFAULT_SERVER_LOCATION = os.path.join(BASE_MODULE_DIRECTORY, CopyServerFromNugetProvider.SERVER_FILES)
@@ -50,12 +60,13 @@ class ServerOptions:
         self.target_server_location: str = self.DEFAULT_SERVER_LOCATION
         self.dot_net_path: str = "dotnet"
         self.clear_target_server_location: bool = False
-        self.accept_eula: bool = True
+        self.accept_eula: bool = False
         self.server_url: Optional[str] = None
         self.graceful_shutdown_timeout: timedelta = timedelta(seconds=30)
         self.process_kill_timeout: timedelta = timedelta(seconds=5)
         self.max_server_startup_time_duration: timedelta = timedelta(minutes=1)
         self.command_line_args: list[str] = list()
+        self.licensing: LicensingOptions = LicensingOptions()
         self.security: Optional[SecurityOptions] = None
 
     @classmethod

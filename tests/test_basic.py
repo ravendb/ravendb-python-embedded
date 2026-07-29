@@ -26,6 +26,7 @@ class BasicTest(TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             embedded = PausingEmbeddedServer()
             server_options = ServerOptions()
+            server_options.accept_eula = True
             server_options.data_directory = str(Path(temp_dir, "RavenDB"))
             server_options.logs_path = str(Path(temp_dir, "Logs"))
             server_options.provider = CopyServerFromNugetProvider()
@@ -65,6 +66,7 @@ class BasicTest(TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             with EmbeddedServer() as embedded:
                 server_options = ServerOptions()
+                server_options.accept_eula = True
                 server_options.data_directory = str(Path(temp_dir, "RavenDB"))
                 server_options.logs_path = str(Path(temp_dir, "Logs"))
                 server_options.provider = CopyServerFromNugetProvider()
@@ -80,6 +82,7 @@ class BasicTest(TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             embedded = EmbeddedServer()
             server_options = ServerOptions()
+            server_options.accept_eula = True
             server_options.data_directory = str(Path(temp_dir, "RavenDB"))
             server_options.logs_path = str(Path(temp_dir, "Logs"))
             server_options.provider = CopyServerFromNugetProvider()
@@ -100,6 +103,7 @@ class BasicTest(TestCase):
         try:
             with EmbeddedServer() as embedded:
                 server_options = ServerOptions()
+                server_options.accept_eula = True
                 server_options.data_directory = str(Path(temp_dir, "RavenDB"))
                 server_options.logs_path = str(Path(temp_dir, "Logs"))
                 server_options.provider = CopyServerFromNugetProvider()
@@ -122,6 +126,7 @@ class BasicTest(TestCase):
 
             with EmbeddedServer() as embedded:
                 server_options = ServerOptions()
+                server_options.accept_eula = True
                 server_options.data_directory = str(Path(temp_dir, "RavenDB"))
                 server_options.provider = CopyServerFromNugetProvider()
                 embedded.start_server(server_options)

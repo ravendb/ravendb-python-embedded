@@ -24,6 +24,7 @@ The core is:
 from ravendb_embedded import EmbeddedServer, ServerOptions
 
 options = ServerOptions()
+options.accept_eula = True
 options.with_external_server("/path/to/extracted/Server")  # a self-contained build
 with EmbeddedServer() as server:
     server.start_server(options)

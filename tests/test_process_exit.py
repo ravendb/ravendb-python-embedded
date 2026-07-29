@@ -15,6 +15,7 @@ class TestProcessExit(TestCase):
         Path(server_directory, "Raven.Server.dll").write_text(script, encoding="utf-8")
 
         options = ServerOptions()
+        options.accept_eula = True
         options.with_external_server(str(server_directory))
         options.dot_net_path = sys.executable
         options.framework_version = ""

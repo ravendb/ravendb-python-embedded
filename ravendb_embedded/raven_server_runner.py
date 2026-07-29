@@ -15,6 +15,12 @@ from ravendb_embedded.runtime_framework_version_matcher import (
 class RavenServerRunner:
     @staticmethod
     def run(options: ServerOptions) -> subprocess.Popen:
+        if not options.accept_eula:
+            raise ValueError(
+                "RavenDB EULA acceptance is required. Review the RavenDB EULA and set "
+                "ServerOptions.accept_eula = True before starting the server."
+            )
+
         if not options.target_server_location.strip():
             raise ValueError("target_server_location cannot be None or whitespace")
 
@@ -55,10 +61,28 @@ class RavenServerRunner:
         command_line_args = [
             f"--Embedded.ParentProcessId={RavenServerRunner.get_process_id('0')}",
             f"--License.Eula.Accepted={'true' if options.accept_eula else 'false'}",
+            f"--License.DisableAutoUpdate={'true' if options.licensing.disable_auto_update else 'false'}",
+            (
+                "--License.DisableAutoUpdateFromApi="
+                f"{'true' if options.licensing.disable_auto_update_from_api else 'false'}"
+            ),
+            (
+                "--License.DisableLicenseSupportCheck="
+                f"{'true' if options.licensing.disable_license_support_check else 'false'}"
+            ),
+            (
+                "--License.ThrowOnInvalidOrMissingLicense="
+                f"{'true' if options.licensing.throw_on_invalid_or_missing_license else 'false'}"
+            ),
             "--Setup.Mode=None",
             f"--DataDir={options.data_directory}",
             f"--Logs.Path={options.logs_path}",
         ]
+
+        if options.licensing.license is not None:
+            command_line_args.append(f"--License={options.licensing.license}")
+        if options.licensing.license_path is not None:
+            command_line_args.append(f"--License.Path={options.licensing.license_path}")
 
         if options.security:
             options.server_url = options.server_url or "https://127.0.0.1:0"

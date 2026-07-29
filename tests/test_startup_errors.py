@@ -19,6 +19,7 @@ class TestStartupErrors(TestCase):
             )
 
             options = ServerOptions()
+            options.accept_eula = True
             options.with_external_server(str(server_directory))
             options.dot_net_path = sys.executable
             options.framework_version = ""
@@ -54,6 +55,7 @@ class TestStartupErrors(TestCase):
             )
 
             options = ServerOptions()
+            options.accept_eula = True
             options.with_external_server(str(server_directory))
             options.dot_net_path = sys.executable
             options.framework_version = ""
@@ -80,6 +82,7 @@ class TestStartupErrors(TestCase):
             )
 
             options = ServerOptions()
+            options.accept_eula = True
             options.with_external_server(str(server_directory))
             options.dot_net_path = sys.executable
             options.framework_version = ""

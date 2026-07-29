@@ -22,6 +22,7 @@ The complete example is [`03_on_demand_server.py`](03_on_demand_server.py). The 
 from ravendb_embedded import EmbeddedServer, ServerOptions
 
 options = ServerOptions()
+options.accept_eula = True
 options.with_auto_downloaded_server()   # download + cache a self-contained server on first use
 
 with EmbeddedServer() as server:

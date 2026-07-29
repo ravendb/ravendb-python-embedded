@@ -26,6 +26,7 @@ if not SERVER:
 def main() -> None:
     with tempfile.TemporaryDirectory() as work:
         options = ServerOptions()
+        options.accept_eula = True
         options.data_directory = str(Path(work, "data"))
         options.logs_path = str(Path(work, "logs"))
         # Bogus on purpose: a self-contained build must never call `dotnet`, so if it still boots the no-.NET path works.

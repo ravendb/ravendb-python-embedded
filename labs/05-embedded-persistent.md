@@ -18,6 +18,7 @@ from ravendb_embedded import EmbeddedServer, ServerOptions
 
 def options(data_directory, logs_path):
     o = ServerOptions()
+    o.accept_eula = True
     o.data_directory = data_directory   # a fixed folder you reuse across restarts
     o.logs_path = logs_path
     return o

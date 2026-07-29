@@ -19,6 +19,7 @@ from ravendb_embedded import EmbeddedServer, ServerOptions
 from ravendb_embedded.options import DatabaseOptions
 
 options = ServerOptions()
+options.accept_eula = True
 options.secured(server_pfx_path, client_pem_path, ca_certificate_path=ca_crt_path)
 
 with EmbeddedServer() as server:

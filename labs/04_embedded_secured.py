@@ -90,6 +90,7 @@ def main() -> None:
         server_pfx, client_pem, ca_crt = _demo_certificates(work)
 
         options = ServerOptions()
+        options.accept_eula = True
         options.secured(server_pfx, client_pem, ca_certificate_path=ca_crt)
         options.data_directory = str(Path(work, "RavenDB"))
         options.logs_path = str(Path(work, "Logs"))

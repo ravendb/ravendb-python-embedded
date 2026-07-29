@@ -18,6 +18,7 @@ class TestSecuredBasic(TestCase):
             server_pfx, client_pem, ca_crt = generate_self_signed_certificates(temp_dir)
             with EmbeddedServer() as embedded:
                 server_options = ServerOptions()
+                server_options.accept_eula = True
                 server_options.secured(server_pfx, client_pem, ca_certificate_path=ca_crt)
                 server_options.data_directory = str(Path(temp_dir, "RavenDB"))
                 server_options.logs_path = str(Path(temp_dir, "Logs"))
@@ -41,6 +42,7 @@ class TestSecuredBasic(TestCase):
             server_pfx, client_pem, ca_crt = generate_separate_server_and_client_certificates(temp_dir)
             with EmbeddedServer() as embedded:
                 server_options = ServerOptions()
+                server_options.accept_eula = True
                 server_options.secured(server_pfx, client_pem, ca_certificate_path=ca_crt)
                 server_options.data_directory = str(Path(temp_dir, "RavenDB"))
                 server_options.logs_path = str(Path(temp_dir, "Logs"))
@@ -67,6 +69,7 @@ class TestSecuredBasic(TestCase):
 
             with EmbeddedServer() as embedded:
                 server_options = ServerOptions()
+                server_options.accept_eula = True
                 server_options.secured_with_certificate_exec(
                     sys.executable,
                     f'"{certificate_loader}" "{server_pfx}"',
