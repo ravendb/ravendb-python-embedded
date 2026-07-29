@@ -8,14 +8,13 @@ import subprocess
 import time
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import Optional, List, Callable, Tuple, Generic, TypeVar, Dict, IO
-from threading import Lock, RLock, Thread
+from typing import Optional, List, Callable, Tuple, Generic, TypeVar
+from threading import Event, Lock, RLock, Thread
 from queue import Queue
 import webbrowser
 
 from ravendb import DocumentStore, CreateDatabaseOperation
-from ravendb.exceptions.raven_exceptions import ConcurrencyException, RavenException
-from ravendb.tools.utils import Stopwatch
+from ravendb.exceptions.raven_exceptions import ConcurrencyException
 from ravendb_embedded.options import ServerOptions, DatabaseOptions
 from ravendb_embedded.raven_server_runner import RavenServerRunner
 
@@ -30,8 +29,6 @@ class ServerProcessExitedEvent:
 
 
 class EmbeddedServer:
-    END_OF_STREAM_MARKER = "$$END_OF_STREAM$$"
-
     # singleton
     def __init__(self):
         self.server_task: Optional[Lazy[Tuple[str, subprocess.Popen]]] = None
@@ -313,24 +310,72 @@ class EmbeddedServer:
 
         self._log_debug("Starting global server")
 
-        url_ref: Dict[str, Optional[str]] = {"value": None}
-        startup_duration = Stopwatch.create_started()
-
-        output_string = self.read_output(
-            process.stdout,
-            startup_duration,
-            options,
-            lambda line, builder: self.online(line, builder, url_ref, process, startup_duration, options),
-        )
-
-        if url_ref["value"] is None:
-            error_string = self.read_output(process.stderr, Stopwatch.create_started(), options, None)
+        server_url, output_string, error_string = self._wait_for_server_start(process, options)
+        if server_url is None:
             self._shutdown_server_process(process)
             raise RuntimeError(self.build_startup_exception_message(output_string, error_string, process))
 
         self._register_exit_handler(process)
         self._watch_server_process(process)
-        return url_ref["value"], process
+        return server_url, process
+
+    def _wait_for_server_start(
+        self,
+        process: subprocess.Popen,
+        options: ServerOptions,
+    ) -> Tuple[Optional[str], str, str]:
+        output_events: Queue[Tuple[str, Optional[str]]] = Queue()
+        startup_complete = Event()
+
+        def read_stream(stream_name, stream):
+            try:
+                for raw_line in iter(stream.readline, b""):
+                    line = raw_line.decode("utf-8", errors="replace").rstrip("\r\n")
+                    if not startup_complete.is_set():
+                        output_events.put((stream_name, line))
+            except Exception as error:
+                if not startup_complete.is_set():
+                    output_events.put((stream_name, f"Unable to read process output: {error}"))
+            finally:
+                if not startup_complete.is_set():
+                    output_events.put((stream_name, None))
+
+        Thread(target=read_stream, args=("stdout", process.stdout), daemon=True).start()
+        Thread(target=read_stream, args=("stderr", process.stderr), daemon=True).start()
+
+        stdout_lines = []
+        stderr_lines = []
+        ended_streams = set()
+        deadline = time.monotonic() + options.max_server_startup_time_duration.total_seconds()
+        prefix = "Server available on: "
+
+        try:
+            while True:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    return None, self._join_output(stdout_lines), self._join_output(stderr_lines)
+
+                try:
+                    stream_name, line = output_events.get(timeout=min(0.1, remaining))
+                except queue.Empty:
+                    continue
+
+                if line is None:
+                    ended_streams.add(stream_name)
+                    if len(ended_streams) == 2:
+                        return None, self._join_output(stdout_lines), self._join_output(stderr_lines)
+                    continue
+
+                lines = stdout_lines if stream_name == "stdout" else stderr_lines
+                lines.append(line)
+                if stream_name == "stdout" and line.startswith(prefix):
+                    return line[len(prefix) :], self._join_output(stdout_lines), self._join_output(stderr_lines)
+        finally:
+            startup_complete.set()
+
+    @staticmethod
+    def _join_output(lines: List[str]) -> str:
+        return os.linesep.join(lines) + (os.linesep if lines else "")
 
     @staticmethod
     def build_startup_exception_message(output_string: str, error_string: str, process: subprocess.Popen) -> str:
@@ -355,82 +400,6 @@ class EmbeddedServer:
             sb.append(os.linesep)
 
         sb.append("Check your ServerOptions and host dependencies, or run the command manually to see detailed error.")
-        return "".join(sb)
-
-    def online(
-        self,
-        line: str,
-        builder: List[str],
-        url_ref: Dict[str, Optional[str]],
-        process: subprocess.Popen,
-        startup_duration: Stopwatch,
-        options: ServerOptions,
-    ):
-        if line is None:
-            error_string = self.read_output(process.stderr, Stopwatch.create_started(), options, None)
-            self._shutdown_server_process(process)
-            raise RuntimeError(self.build_startup_exception_message("".join(builder), error_string, process))
-
-        prefix = "Server available on: "
-        if line.startswith(prefix):
-            url_ref["value"] = line[len(prefix) :]
-            return True
-
-        return False
-
-    def read_output(
-        self,
-        output: IO,
-        startup_duration: Stopwatch,
-        options: ServerOptions,
-        online: Optional[Callable[[str, List[str]], bool]],
-    ):
-        def read_output_line() -> Optional[str]:
-            while True:
-                try:
-                    line_ = output_queue.get_nowait()
-                    return line_
-                except queue.Empty:
-                    if options.max_server_startup_time_duration - startup_duration.elapsed() <= timedelta(seconds=0):
-                        return None
-                    time.sleep(1)
-
-        def output_reader():
-            try:
-                for line_ in iter(output.readline, b""):
-                    output_queue.put(line_.decode("utf-8").strip())
-                output_queue.put(self.END_OF_STREAM_MARKER)
-            except Exception as e:
-                raise RavenException("Unable to read server output") from e
-
-        output_queue: Queue[str] = Queue()
-        output_thread = Thread(target=output_reader, daemon=True)
-        output_thread.start()
-
-        sb = []
-
-        while True:
-            line = read_output_line()
-
-            if options.max_server_startup_time_duration < startup_duration.elapsed():
-                return "".join(sb)
-
-            if line is None:
-                break
-
-            if line == self.END_OF_STREAM_MARKER:
-                break
-
-            sb.append(line)
-            sb.append(os.linesep)
-
-            should_stop = False
-            if online is not None:
-                should_stop = online(line, sb)
-
-            if should_stop:
-                break
-
         return "".join(sb)
 
     def open_studio_in_browser(self):

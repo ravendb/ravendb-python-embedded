@@ -8,12 +8,45 @@ from ravendb_embedded import EmbeddedServer, ServerOptions
 
 
 class TestStartupErrors(TestCase):
+    def test_stderr_is_drained_before_and_after_server_is_online(self):
+        with tempfile.TemporaryDirectory() as directory:
+            server_directory = Path(directory, "Server")
+            server_directory.mkdir()
+            shutdown_marker = Path(directory, "shutdown.txt")
+            Path(server_directory, "Raven.Server.dll").write_text(
+                "import pathlib\n"
+                "import sys\n"
+                "payload = 'x' * (1024 * 1024)\n"
+                "sys.stderr.write(payload)\n"
+                "sys.stderr.flush()\n"
+                "print('Server available on: http://127.0.0.1:12345', flush=True)\n"
+                "sys.stderr.write(payload)\n"
+                "sys.stderr.flush()\n"
+                "command = sys.stdin.readline().strip()\n"
+                f"pathlib.Path({str(shutdown_marker)!r}).write_text(command, encoding='utf-8')\n",
+                encoding="utf-8",
+            )
+
+            options = ServerOptions()
+            options.with_external_server(str(server_directory))
+            options.dot_net_path = sys.executable
+            options.data_directory = str(Path(directory, "data"))
+            options.logs_path = str(Path(directory, "logs"))
+            options.max_server_startup_time_duration = timedelta(seconds=10)
+
+            with EmbeddedServer() as server:
+                server.start_server(options)
+
+            self.assertEqual("shutdown no-confirmation", shutdown_marker.read_text(encoding="utf-8"))
+
     def test_failed_server_process_includes_stderr(self):
         with tempfile.TemporaryDirectory() as directory:
             server_directory = Path(directory, "Server")
             server_directory.mkdir()
             Path(server_directory, "Raven.Server.dll").write_text(
                 "import sys\n"
+                "sys.stdout.write('intentional stdout before failure\\n')\n"
+                "sys.stdout.flush()\n"
                 "sys.stderr.write('intentional startup failure from child process\\n')\n"
                 "raise SystemExit(23)\n",
                 encoding="utf-8",
@@ -34,3 +67,5 @@ class TestStartupErrors(TestCase):
             self.assertIn("Unable to start the RavenDB Server", message)
             self.assertIn("Error:", message)
             self.assertIn("intentional startup failure from child process", message)
+            self.assertIn("Output:", message)
+            self.assertIn("intentional stdout before failure", message)
