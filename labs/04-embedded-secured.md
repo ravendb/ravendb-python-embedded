@@ -30,10 +30,13 @@ with EmbeddedServer() as server:
 
 ## Certificates
 
-`secured()` needs a server `.pfx` and a client `.pem`; a password and a CA certificate are
-optional. In production you bring your own (for example from RavenDB's setup wizard or your CA).
-The lab generates a throwaway self-signed pair so it can run unattended; that generator is demo
-code, not something to ship. A RavenDB server certificate needs the right extensions
+The server `.pfx` is required. The client `.pem` is needed when `EmbeddedServer` creates
+authenticated document stores; a password and a CA certificate are optional. To configure only
+the HTTPS server and use clients managed elsewhere, call `options.secured(server_pfx_path)`.
+
+In production you bring your own certificates (for example from RavenDB's setup wizard or your
+CA). The lab generates a throwaway self-signed pair so it can run unattended; that generator is
+demo code, not something to ship. A RavenDB server certificate needs the right extensions
 (digitalSignature key usage, serverAuth/clientAuth EKU, and SANs for how the server is reached),
 which the lab's generator sets.
 

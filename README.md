@@ -203,7 +203,16 @@ unlicensed server would hide a configuration problem.
 
 ### HTTPS and client certificates
 
-Use `ServerOptions.secured()` to start RavenDB over HTTPS:
+Use `ServerOptions.secured()` with a server PFX to start RavenDB over HTTPS:
+
+```python
+options = ServerOptions()
+options.secured("server.pfx")
+```
+
+This configures the embedded server only. External clients must authenticate with a certificate
+trusted by RavenDB. To let `EmbeddedServer` create authenticated `DocumentStore` instances, supply
+a client PEM as well:
 
 ```python
 options = ServerOptions()
@@ -220,10 +229,10 @@ The client PEM must contain both its certificate and matching unencrypted privat
 certificate declares Extended Key Usage, it must include TLS Client Authentication.
 
 The server PFX is not reused as a client certificate: a server-only certificate may
-not have Client Authentication EKU, and its PFX may not contain a suitable client identity. Supply
-the client PEM explicitly. `ca_certificate_path` is optional for certificates trusted by the
-operating system; provide a CA bundle for private or self-signed server certificates. These files
-are validated before the RavenDB process starts.
+not have Client Authentication EKU, and its PFX may not contain a suitable client identity.
+`ca_certificate_path` is optional for certificates trusted by the operating system; provide a CA
+bundle for private or self-signed server certificates. A supplied client PEM and CA bundle are
+validated before the RavenDB process starts.
 
 When another process supplies the server certificate, use `secured_with_certificate_exec()`:
 

@@ -154,11 +154,26 @@ class RavenServerRunner:
         security = options.security
         if security is None:
             return None
+
+        if security.ca_certificate_path:
+            ca_path = security.ca_certificate_path
+            try:
+                with open(ca_path, "rb") as ca_file:
+                    ca_data = ca_file.read()
+            except OSError as error:
+                raise ValueError(f"Unable to read the CA certificate bundle '{ca_path}': {error}") from error
+
+            ca_certificates = RavenServerRunner._CERTIFICATE_PATTERN.findall(ca_data)
+            if not ca_certificates:
+                raise ValueError(f"CA certificate bundle '{ca_path}' does not contain an X.509 certificate.")
+            try:
+                for ca_certificate in ca_certificates:
+                    x509.load_pem_x509_certificate(ca_certificate, default_backend())
+            except ValueError as error:
+                raise ValueError(f"CA certificate bundle '{ca_path}' contains an invalid certificate.") from error
+
         if not security.client_pem_certificate_path:
-            raise ValueError(
-                "A secured embedded server requires client_pem_certificate_path. "
-                "The server PFX is not automatically reused as a client certificate."
-            )
+            return None
 
         client_path = security.client_pem_certificate_path
         try:
@@ -196,23 +211,6 @@ class RavenServerRunner:
         else:
             if ExtendedKeyUsageOID.CLIENT_AUTH not in extended_key_usage:
                 raise ValueError(f"Client certificate '{client_path}' does not allow TLS client authentication.")
-
-        if security.ca_certificate_path:
-            ca_path = security.ca_certificate_path
-            try:
-                with open(ca_path, "rb") as ca_file:
-                    ca_data = ca_file.read()
-            except OSError as error:
-                raise ValueError(f"Unable to read the CA certificate bundle '{ca_path}': {error}") from error
-
-            ca_certificates = RavenServerRunner._CERTIFICATE_PATTERN.findall(ca_data)
-            if not ca_certificates:
-                raise ValueError(f"CA certificate bundle '{ca_path}' does not contain an X.509 certificate.")
-            try:
-                for ca_certificate in ca_certificates:
-                    x509.load_pem_x509_certificate(ca_certificate, default_backend())
-            except ValueError as error:
-                raise ValueError(f"CA certificate bundle '{ca_path}' contains an invalid certificate.") from error
 
         return certificate
 

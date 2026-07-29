@@ -116,11 +116,6 @@ class ServerOptions:
     ) -> "ServerOptions":
         if server_pfx_certificate_path is None:
             raise ValueError("certificate cannot be None")
-        if not client_pem_certificate_path:
-            raise ValueError(
-                "client_pem_certificate_path is required. A server PFX is not reused automatically "
-                "because it may not contain a client-authentication certificate and private key."
-            )
 
         if self.security is not None:
             raise RuntimeError("The security has already been set up for this ServerOptions object")

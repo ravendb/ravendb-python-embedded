@@ -12,6 +12,20 @@ from tests.certificates import generate_self_signed_certificates, generate_separ
 
 
 class TestSecuredBasic(TestCase):
+    def test_secured_embedded_server_starts_without_a_managed_client_certificate(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            server_pfx, _, _ = generate_self_signed_certificates(temp_dir)
+            with EmbeddedServer() as embedded:
+                server_options = ServerOptions()
+                server_options.secured(server_pfx)
+                server_options.data_directory = str(Path(temp_dir, "RavenDB"))
+                server_options.logs_path = str(Path(temp_dir, "Logs"))
+                server_options.provider = CopyServerFromNugetProvider()
+
+                embedded.start_server(server_options)
+
+                self.assertTrue(embedded.get_server_uri().startswith("https://"))
+
     def test_secured_embedded(self):
         temp_dir = tempfile.mkdtemp()
         try:

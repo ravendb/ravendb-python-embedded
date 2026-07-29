@@ -36,9 +36,11 @@ class TestSecurityValidation(TestCase):
                 ).value.key_identifier
                 self.assertEqual(authority_key_identifier, ca_key_identifier)
 
-    def test_secured_requires_an_explicit_client_certificate(self):
-        with self.assertRaisesRegex(ValueError, "client_pem_certificate_path is required"):
-            ServerOptions().secured("server.pfx")
+    def test_secured_allows_server_only_configuration(self):
+        options = ServerOptions().secured("server.pfx")
+
+        self.assertEqual(options.security.server_pfx_certificate_path, "server.pfx")
+        self.assertIsNone(options.security.client_pem_certificate_path)
 
     def test_client_pem_must_contain_a_private_key(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -82,6 +84,15 @@ class TestSecurityValidation(TestCase):
             ca_path.write_text("not a certificate", encoding="utf-8")
 
             options = self._secured_options(client_pem, ca_path)
+            with self.assertRaisesRegex(ValueError, "does not contain an X.509 certificate"):
+                RavenServerRunner.run(options)
+
+    def test_ca_is_validated_without_a_managed_client_certificate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            ca_path = Path(directory, "ca.crt")
+            ca_path.write_text("not a certificate", encoding="utf-8")
+            options = ServerOptions().secured("server.pfx", ca_certificate_path=str(ca_path))
+
             with self.assertRaisesRegex(ValueError, "does not contain an X.509 certificate"):
                 RavenServerRunner.run(options)
 
