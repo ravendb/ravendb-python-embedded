@@ -55,8 +55,8 @@ class ServerOptions:
 
     def __init__(self):
         self.framework_version: Optional[str] = "auto"
-        self.logs_path: str = self.BASE_MODULE_DIRECTORY + "/RavenDB/Logs"
-        self.data_directory: str = self.BASE_MODULE_DIRECTORY + "/RavenDB"
+        self._data_directory: str = str(Path.cwd() / "RavenDB")
+        self._logs_path: Optional[str] = None
         self.provider: ProvideRavenDBServer = CopyServerFromNugetProvider()
         self.target_server_location: str = self.DEFAULT_SERVER_LOCATION
         self.dot_net_path: str = "dotnet"
@@ -69,6 +69,22 @@ class ServerOptions:
         self.command_line_args: list[str] = list()
         self.licensing: LicensingOptions = LicensingOptions()
         self.security: Optional[SecurityOptions] = None
+
+    @property
+    def data_directory(self) -> str:
+        return self._data_directory
+
+    @data_directory.setter
+    def data_directory(self, value: str) -> None:
+        self._data_directory = value
+
+    @property
+    def logs_path(self) -> str:
+        return self._logs_path or str(Path(self._data_directory) / "Logs")
+
+    @logs_path.setter
+    def logs_path(self, value: Optional[str]) -> None:
+        self._logs_path = value
 
     @classmethod
     def INSTANCE(cls):

@@ -1,3 +1,4 @@
+import os
 import shutil
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
@@ -10,6 +11,26 @@ from tests import Person
 
 
 class BasicTest(TestCase):
+    def test_default_data_and_log_locations_are_runnable(self):
+        previous_directory = Path.cwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+                options = ServerOptions()
+                options.accept_eula = True
+
+                with EmbeddedServer() as embedded:
+                    embedded.start_server(options)
+                    with embedded.get_document_store("Defaults") as store:
+                        with store.open_session() as session:
+                            session.store({"works": True}, "defaults/1")
+                            session.save_changes()
+
+                self.assertTrue(Path(temp_dir, "RavenDB").is_dir())
+                self.assertTrue(Path(temp_dir, "RavenDB", "Logs").is_dir())
+            finally:
+                os.chdir(previous_directory)
+
     def test_close_waits_for_document_store_initialization(self):
         initialization_started = Event()
         continue_initialization = Event()

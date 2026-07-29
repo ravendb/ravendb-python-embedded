@@ -25,8 +25,6 @@ from ravendb_embedded import EmbeddedServer, ServerOptions
 
 options = ServerOptions()
 options.accept_eula = True  # Set only after reviewing the RavenDB EULA.
-options.data_directory = "./data/RavenDB"
-options.logs_path = "./logs/RavenDB"
 
 with EmbeddedServer() as server:
     server.start_server(options)
@@ -147,8 +145,10 @@ Create a `ServerOptions` instance before starting the server:
 Construct options with `ServerOptions()`. The misleading `ServerOptions.INSTANCE()` constructor
 alias is deprecated and will be removed in a future release.
 
-- `data_directory`: where database data is stored.
-- `logs_path`: where RavenDB writes its logs.
+- `data_directory`: where database data is stored; defaults to `./RavenDB` in the application's
+  current working directory.
+- `logs_path`: where RavenDB writes its logs; defaults to `<data_directory>/Logs` and follows a
+  changed `data_directory` until you set `logs_path` explicitly.
 - `accept_eula`: must be set to `True` explicitly after reviewing the RavenDB EULA.
 - `server_url`: address to bind; the default uses localhost and a free port.
 - `dot_net_path`: path to `dotnet` for bundled mode when it is not on `PATH`.
@@ -248,8 +248,13 @@ Callbacks run on a background thread. `event.expected` is `True` for exits cause
 
 ### Persistent data
 
-Set `data_directory` to a stable path when data should survive process restarts. Use a temporary
-directory for disposable tests.
+The default `./RavenDB` directory survives process restarts. Set `data_directory` explicitly when
+the application can run from different working directories or when several embedded servers run
+in one process. Use a temporary directory for disposable tests.
+
+Older package versions defaulted to a directory inside the installed Python package. Applications
+that need to reuse data created there should point `data_directory` at that existing location
+explicitly before upgrading their storage layout.
 
 Runnable walkthrough: [Lab 05 — persistent data](labs/05-embedded-persistent.md).
 
