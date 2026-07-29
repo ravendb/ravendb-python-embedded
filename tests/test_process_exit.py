@@ -35,6 +35,7 @@ class TestProcessExit(TestCase):
             events = []
 
             with EmbeddedServer() as server:
+
                 def on_exit(event):
                     events.append(event)
                     callback_finished.set()
@@ -62,9 +63,7 @@ class TestProcessExit(TestCase):
             events = []
 
             with EmbeddedServer() as server:
-                server.add_server_process_exited(
-                    lambda event: (events.append(event), callback_finished.set())
-                )
+                server.add_server_process_exited(lambda event: (events.append(event), callback_finished.set()))
                 server.start_server(options)
                 process_id = server.get_server_process_id()
                 server.stop_server()

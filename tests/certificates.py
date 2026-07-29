@@ -132,9 +132,7 @@ def generate_separate_server_and_client_certificates(directory):
     server_key, server_certificate = issue_certificate(
         "localhost",
         [ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH],
-        x509.SubjectAlternativeName(
-            [x509.DNSName("localhost"), x509.IPAddress(ipaddress.ip_address("127.0.0.1"))]
-        ),
+        x509.SubjectAlternativeName([x509.DNSName("localhost"), x509.IPAddress(ipaddress.ip_address("127.0.0.1"))]),
     )
     client_key, client_certificate = issue_certificate(
         "embedded-admin",

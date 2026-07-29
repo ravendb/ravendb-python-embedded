@@ -61,9 +61,7 @@ class TestSecuredBasic(TestCase):
             server_pfx, client_pem, ca_crt = generate_separate_server_and_client_certificates(temp_dir)
             certificate_loader = Path(temp_dir, "load_certificate.py")
             certificate_loader.write_text(
-                "import pathlib\n"
-                "import sys\n"
-                "sys.stdout.buffer.write(pathlib.Path(sys.argv[1]).read_bytes())\n",
+                "import pathlib\n" "import sys\n" "sys.stdout.buffer.write(pathlib.Path(sys.argv[1]).read_bytes())\n",
                 encoding="utf-8",
             )
 

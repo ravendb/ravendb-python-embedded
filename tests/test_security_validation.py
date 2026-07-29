@@ -33,8 +33,7 @@ class TestSecurityValidation(TestCase):
             _, second_certificate = self._create_certificate([ExtendedKeyUsageOID.CLIENT_AUTH])
             client_pem = Path(directory, "client.pem")
             client_pem.write_bytes(
-                self._private_key_pem(first_key)
-                + second_certificate.public_bytes(serialization.Encoding.PEM)
+                self._private_key_pem(first_key) + second_certificate.public_bytes(serialization.Encoding.PEM)
             )
 
             options = self._secured_options(client_pem)
@@ -45,9 +44,7 @@ class TestSecurityValidation(TestCase):
         with tempfile.TemporaryDirectory() as directory:
             key, certificate = self._create_certificate([ExtendedKeyUsageOID.SERVER_AUTH])
             client_pem = Path(directory, "client.pem")
-            client_pem.write_bytes(
-                self._private_key_pem(key) + certificate.public_bytes(serialization.Encoding.PEM)
-            )
+            client_pem.write_bytes(self._private_key_pem(key) + certificate.public_bytes(serialization.Encoding.PEM))
 
             options = self._secured_options(client_pem)
             with self.assertRaisesRegex(ValueError, "does not allow TLS client authentication"):
@@ -57,9 +54,7 @@ class TestSecurityValidation(TestCase):
         with tempfile.TemporaryDirectory() as directory:
             key, certificate = self._create_certificate([ExtendedKeyUsageOID.CLIENT_AUTH])
             client_pem = Path(directory, "client.pem")
-            client_pem.write_bytes(
-                self._private_key_pem(key) + certificate.public_bytes(serialization.Encoding.PEM)
-            )
+            client_pem.write_bytes(self._private_key_pem(key) + certificate.public_bytes(serialization.Encoding.PEM))
             ca_path = Path(directory, "ca.crt")
             ca_path.write_text("not a certificate", encoding="utf-8")
 

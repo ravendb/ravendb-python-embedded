@@ -16,12 +16,12 @@ from ravendb_embedded.runtime_framework_version_matcher import (
 
 class RavenServerRunner:
     _CERTIFICATE_PATTERN = re.compile(
-        br"-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----",
+        rb"-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----",
         re.DOTALL,
     )
     _PRIVATE_KEY_PATTERN = re.compile(
-        br"-----BEGIN (?:RSA |EC |DSA |ENCRYPTED )?PRIVATE KEY-----.*?"
-        br"-----END (?:RSA |EC |DSA |ENCRYPTED )?PRIVATE KEY-----",
+        rb"-----BEGIN (?:RSA |EC |DSA |ENCRYPTED )?PRIVATE KEY-----.*?"
+        rb"-----END (?:RSA |EC |DSA |ENCRYPTED )?PRIVATE KEY-----",
         re.DOTALL,
     )
 
@@ -187,9 +187,7 @@ class RavenServerRunner:
         try:
             private_key = serialization.load_pem_private_key(key_match.group(), password=None)
         except (TypeError, ValueError) as error:
-            raise ValueError(
-                f"Client PEM '{client_path}' must contain a valid, unencrypted private key."
-            ) from error
+            raise ValueError(f"Client PEM '{client_path}' must contain a valid, unencrypted private key.") from error
 
         public_format = serialization.PublicFormat.SubjectPublicKeyInfo
         certificate_key = certificate.public_key().public_bytes(serialization.Encoding.DER, public_format)
@@ -203,9 +201,7 @@ class RavenServerRunner:
             pass
         else:
             if ExtendedKeyUsageOID.CLIENT_AUTH not in extended_key_usage:
-                raise ValueError(
-                    f"Client certificate '{client_path}' does not allow TLS client authentication."
-                )
+                raise ValueError(f"Client certificate '{client_path}' does not allow TLS client authentication.")
 
         if security.ca_certificate_path:
             ca_path = security.ca_certificate_path

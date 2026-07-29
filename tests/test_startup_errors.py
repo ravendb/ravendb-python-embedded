@@ -46,8 +46,7 @@ class TestStartupErrors(TestCase):
             server_directory = Path(directory, "Server")
             server_directory.mkdir()
             Path(server_directory, "Raven.Server.dll").write_text(
-                "import time\n"
-                "time.sleep(60)\n",
+                "import time\n" "time.sleep(60)\n",
                 encoding="utf-8",
             )
 
