@@ -225,9 +225,15 @@ Use `get_server_process_id()` to inspect the child process. `stop_server()` stop
 disposing the `EmbeddedServer`, and `restart_server()` starts it again with the same options.
 Calling `close()` stops the process and disposes all document stores.
 
+The public API is synchronous, matching the RavenDB Python client's execution model. Server start,
+shutdown, and restart calls block until the requested lifecycle transition completes. Async
+applications can run these blocking lifecycle calls with `asyncio.to_thread()` instead of
+maintaining a second embedded API with different behavior.
+
 `EmbeddedServer` is intentionally not a singleton. An application may run independent server
 instances in the same Python process; give each instance a different `data_directory` and
-`logs_path`. The context manager owns only its own process and document stores.
+`logs_path`. Prefer `with EmbeddedServer() as server:` so the context manager always closes that
+instance's process and document stores.
 
 Register a process-exit callback when the application needs to observe server failures:
 
