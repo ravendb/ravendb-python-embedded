@@ -50,6 +50,8 @@ def generate_self_signed_certificates(directory):
             x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.CLIENT_AUTH]),
             critical=False,
         )
+        .add_extension(x509.SubjectKeyIdentifier.from_public_key(key.public_key()), critical=False)
+        .add_extension(x509.AuthorityKeyIdentifier.from_issuer_public_key(key.public_key()), critical=False)
         .sign(key, hashes.SHA256())
     )
 
@@ -96,6 +98,8 @@ def generate_separate_server_and_client_certificates(directory):
             ),
             critical=True,
         )
+        .add_extension(x509.SubjectKeyIdentifier.from_public_key(ca_key.public_key()), critical=False)
+        .add_extension(x509.AuthorityKeyIdentifier.from_issuer_public_key(ca_key.public_key()), critical=False)
         .sign(ca_key, hashes.SHA256())
     )
 
@@ -124,6 +128,8 @@ def generate_separate_server_and_client_certificates(directory):
                 critical=True,
             )
             .add_extension(x509.ExtendedKeyUsage(extended_key_usage), critical=False)
+            .add_extension(x509.SubjectKeyIdentifier.from_public_key(key.public_key()), critical=False)
+            .add_extension(x509.AuthorityKeyIdentifier.from_issuer_public_key(ca_key.public_key()), critical=False)
         )
         if subject_alternative_name:
             builder = builder.add_extension(subject_alternative_name, critical=False)

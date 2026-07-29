@@ -6,13 +6,36 @@ from unittest import TestCase
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
+from cryptography.hazmat.primitives.serialization import pkcs12
+from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID, NameOID
 
 from ravendb_embedded import ServerOptions
 from ravendb_embedded.raven_server_runner import RavenServerRunner
+from tests.certificates import generate_separate_server_and_client_certificates
 
 
 class TestSecurityValidation(TestCase):
+    def test_generated_certificate_chain_has_matching_key_identifiers(self):
+        with tempfile.TemporaryDirectory() as directory:
+            server_pfx, client_pem, _ = generate_separate_server_and_client_certificates(directory)
+            _, server_certificate, ca_certificates = pkcs12.load_key_and_certificates(
+                Path(server_pfx).read_bytes(), None
+            )
+            ca_certificate = ca_certificates[0]
+            client_pem_bytes = Path(client_pem).read_bytes()
+            client_certificate = x509.load_pem_x509_certificate(
+                client_pem_bytes[client_pem_bytes.index(b"-----BEGIN CERTIFICATE-----") :]
+            )
+
+            ca_key_identifier = ca_certificate.extensions.get_extension_for_oid(
+                ExtensionOID.SUBJECT_KEY_IDENTIFIER
+            ).value.digest
+            for certificate in (server_certificate, client_certificate):
+                authority_key_identifier = certificate.extensions.get_extension_for_oid(
+                    ExtensionOID.AUTHORITY_KEY_IDENTIFIER
+                ).value.key_identifier
+                self.assertEqual(authority_key_identifier, ca_key_identifier)
+
     def test_secured_requires_an_explicit_client_certificate(self):
         with self.assertRaisesRegex(ValueError, "client_pem_certificate_path is required"):
             ServerOptions().secured("server.pfx")
