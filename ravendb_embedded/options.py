@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import warnings
 from datetime import timedelta
 from pathlib import Path
 from typing import Optional
@@ -71,6 +72,11 @@ class ServerOptions:
 
     @classmethod
     def INSTANCE(cls):
+        warnings.warn(
+            "ServerOptions.INSTANCE() is deprecated; construct ServerOptions() directly.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return cls()
 
     @classmethod

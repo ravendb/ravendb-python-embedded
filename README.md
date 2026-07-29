@@ -137,6 +137,9 @@ Runnable walkthrough: [Lab 02 — external self-contained server](labs/02-embedd
 
 Create a `ServerOptions` instance before starting the server:
 
+Construct options with `ServerOptions()`. The misleading `ServerOptions.INSTANCE()` constructor
+alias is deprecated and will be removed in a future release.
+
 - `data_directory`: where database data is stored.
 - `logs_path`: where RavenDB writes its logs.
 - `accept_eula`: must be set to `True` explicitly after reviewing the RavenDB EULA.
