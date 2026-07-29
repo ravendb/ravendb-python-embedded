@@ -1,0 +1,105 @@
+import datetime
+import tempfile
+from pathlib import Path
+from unittest import TestCase
+
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
+
+from ravendb_embedded import ServerOptions
+from ravendb_embedded.raven_server_runner import RavenServerRunner
+
+
+class TestSecurityValidation(TestCase):
+    def test_secured_requires_an_explicit_client_certificate(self):
+        with self.assertRaisesRegex(ValueError, "client_pem_certificate_path is required"):
+            ServerOptions().secured("server.pfx")
+
+    def test_client_pem_must_contain_a_private_key(self):
+        with tempfile.TemporaryDirectory() as directory:
+            _, certificate = self._create_certificate([ExtendedKeyUsageOID.CLIENT_AUTH])
+            client_pem = Path(directory, "client.pem")
+            client_pem.write_bytes(certificate.public_bytes(serialization.Encoding.PEM))
+
+            options = self._secured_options(client_pem)
+            with self.assertRaisesRegex(ValueError, "does not contain a private key"):
+                RavenServerRunner.run(options)
+
+    def test_client_certificate_and_private_key_must_match(self):
+        with tempfile.TemporaryDirectory() as directory:
+            first_key, _ = self._create_certificate([ExtendedKeyUsageOID.CLIENT_AUTH])
+            _, second_certificate = self._create_certificate([ExtendedKeyUsageOID.CLIENT_AUTH])
+            client_pem = Path(directory, "client.pem")
+            client_pem.write_bytes(
+                self._private_key_pem(first_key)
+                + second_certificate.public_bytes(serialization.Encoding.PEM)
+            )
+
+            options = self._secured_options(client_pem)
+            with self.assertRaisesRegex(ValueError, "do not match"):
+                RavenServerRunner.run(options)
+
+    def test_declared_eku_must_allow_client_authentication(self):
+        with tempfile.TemporaryDirectory() as directory:
+            key, certificate = self._create_certificate([ExtendedKeyUsageOID.SERVER_AUTH])
+            client_pem = Path(directory, "client.pem")
+            client_pem.write_bytes(
+                self._private_key_pem(key) + certificate.public_bytes(serialization.Encoding.PEM)
+            )
+
+            options = self._secured_options(client_pem)
+            with self.assertRaisesRegex(ValueError, "does not allow TLS client authentication"):
+                RavenServerRunner.run(options)
+
+    def test_ca_path_must_contain_a_certificate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            key, certificate = self._create_certificate([ExtendedKeyUsageOID.CLIENT_AUTH])
+            client_pem = Path(directory, "client.pem")
+            client_pem.write_bytes(
+                self._private_key_pem(key) + certificate.public_bytes(serialization.Encoding.PEM)
+            )
+            ca_path = Path(directory, "ca.crt")
+            ca_path.write_text("not a certificate", encoding="utf-8")
+
+            options = self._secured_options(client_pem, ca_path)
+            with self.assertRaisesRegex(ValueError, "does not contain an X.509 certificate"):
+                RavenServerRunner.run(options)
+
+    @staticmethod
+    def _secured_options(client_pem: Path, ca_path: Path = None) -> ServerOptions:
+        options = ServerOptions()
+        options.accept_eula = True
+        options.secured(
+            "server.pfx",
+            str(client_pem),
+            ca_certificate_path=str(ca_path) if ca_path else None,
+        )
+        return options
+
+    @staticmethod
+    def _private_key_pem(key) -> bytes:
+        return key.private_bytes(
+            serialization.Encoding.PEM,
+            serialization.PrivateFormat.TraditionalOpenSSL,
+            serialization.NoEncryption(),
+        )
+
+    @staticmethod
+    def _create_certificate(extended_key_usage):
+        key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "embedded-client")])
+        now = datetime.datetime.now(datetime.timezone.utc)
+        certificate = (
+            x509.CertificateBuilder()
+            .subject_name(name)
+            .issuer_name(name)
+            .public_key(key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(now - datetime.timedelta(days=1))
+            .not_valid_after(now + datetime.timedelta(days=1))
+            .add_extension(x509.ExtendedKeyUsage(extended_key_usage), critical=False)
+            .sign(key, hashes.SHA256())
+        )
+        return key, certificate

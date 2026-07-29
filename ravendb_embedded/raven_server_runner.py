@@ -1,9 +1,11 @@
 import os
+import re
 import subprocess
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.x509.oid import ExtendedKeyUsageOID, ExtensionOID
 from ravendb.exceptions.raven_exceptions import RavenException
 
 from ravendb_embedded.options import ServerOptions
@@ -13,6 +15,16 @@ from ravendb_embedded.runtime_framework_version_matcher import (
 
 
 class RavenServerRunner:
+    _CERTIFICATE_PATTERN = re.compile(
+        br"-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----",
+        re.DOTALL,
+    )
+    _PRIVATE_KEY_PATTERN = re.compile(
+        br"-----BEGIN (?:RSA |EC |DSA |ENCRYPTED )?PRIVATE KEY-----.*?"
+        br"-----END (?:RSA |EC |DSA |ENCRYPTED )?PRIVATE KEY-----",
+        re.DOTALL,
+    )
+
     @staticmethod
     def run(options: ServerOptions) -> subprocess.Popen:
         if not options.accept_eula:
@@ -20,6 +32,8 @@ class RavenServerRunner:
                 "RavenDB EULA acceptance is required. Review the RavenDB EULA and set "
                 "ServerOptions.accept_eula = True before starting the server."
             )
+
+        client_certificate = RavenServerRunner._validate_security_options(options)
 
         if not options.target_server_location.strip():
             raise ValueError("target_server_location cannot be None or whitespace")
@@ -101,13 +115,8 @@ class RavenServerRunner:
                         f"--Security.Certificate.Load.Exec.Arguments={options.security.certificate_arguments}",
                     ]
                 )
-            if options.security.client_pem_certificate_path:
-                with open(options.security.client_pem_certificate_path, "rb") as cert_file:
-                    cert_data = cert_file.read()
-
-                cert = x509.load_pem_x509_certificate(cert_data, default_backend())
-                thumbprint = cert.fingerprint(hashes.SHA1()).hex().upper()
-
+            if client_certificate:
+                thumbprint = client_certificate.fingerprint(hashes.SHA1()).hex().upper()
                 command_line_args.append(f"--Security.WellKnownCertificates.Admin={thumbprint}")
         else:
             options.server_url = options.server_url or "http://127.0.0.1:0"
@@ -145,6 +154,77 @@ class RavenServerRunner:
         process = process_builder
 
         return process
+
+    @staticmethod
+    def _validate_security_options(options: ServerOptions) -> x509.Certificate | None:
+        security = options.security
+        if security is None:
+            return None
+        if not security.client_pem_certificate_path:
+            raise ValueError(
+                "A secured embedded server requires client_pem_certificate_path. "
+                "The server PFX is not automatically reused as a client certificate."
+            )
+
+        client_path = security.client_pem_certificate_path
+        try:
+            with open(client_path, "rb") as client_file:
+                client_data = client_file.read()
+        except OSError as error:
+            raise ValueError(f"Unable to read the client PEM certificate '{client_path}': {error}") from error
+
+        certificate_match = RavenServerRunner._CERTIFICATE_PATTERN.search(client_data)
+        if certificate_match is None:
+            raise ValueError(f"Client PEM '{client_path}' does not contain an X.509 certificate.")
+        try:
+            certificate = x509.load_pem_x509_certificate(certificate_match.group(), default_backend())
+        except ValueError as error:
+            raise ValueError(f"Client PEM '{client_path}' contains an invalid X.509 certificate.") from error
+
+        key_match = RavenServerRunner._PRIVATE_KEY_PATTERN.search(client_data)
+        if key_match is None:
+            raise ValueError(f"Client PEM '{client_path}' does not contain a private key.")
+        try:
+            private_key = serialization.load_pem_private_key(key_match.group(), password=None)
+        except (TypeError, ValueError) as error:
+            raise ValueError(
+                f"Client PEM '{client_path}' must contain a valid, unencrypted private key."
+            ) from error
+
+        public_format = serialization.PublicFormat.SubjectPublicKeyInfo
+        certificate_key = certificate.public_key().public_bytes(serialization.Encoding.DER, public_format)
+        private_key_public = private_key.public_key().public_bytes(serialization.Encoding.DER, public_format)
+        if certificate_key != private_key_public:
+            raise ValueError(f"The certificate and private key in client PEM '{client_path}' do not match.")
+
+        try:
+            extended_key_usage = certificate.extensions.get_extension_for_oid(ExtensionOID.EXTENDED_KEY_USAGE).value
+        except x509.ExtensionNotFound:
+            pass
+        else:
+            if ExtendedKeyUsageOID.CLIENT_AUTH not in extended_key_usage:
+                raise ValueError(
+                    f"Client certificate '{client_path}' does not allow TLS client authentication."
+                )
+
+        if security.ca_certificate_path:
+            ca_path = security.ca_certificate_path
+            try:
+                with open(ca_path, "rb") as ca_file:
+                    ca_data = ca_file.read()
+            except OSError as error:
+                raise ValueError(f"Unable to read the CA certificate bundle '{ca_path}': {error}") from error
+
+            ca_certificates = RavenServerRunner._CERTIFICATE_PATTERN.findall(ca_data)
+            if not ca_certificates:
+                raise ValueError(f"CA certificate bundle '{ca_path}' does not contain an X.509 certificate.")
+            try:
+                for ca_certificate in ca_certificates:
+                    x509.load_pem_x509_certificate(ca_certificate, default_backend())
+            except ValueError as error:
+                raise ValueError(f"CA certificate bundle '{ca_path}' contains an invalid certificate.") from error
+
+        return certificate
 
     @staticmethod
     def get_process_id() -> str:
