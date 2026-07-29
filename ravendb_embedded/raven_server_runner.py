@@ -59,7 +59,7 @@ class RavenServerRunner:
 
         # Args are passed to Popen as a list (no shell), so they need no manual escaping.
         command_line_args = [
-            f"--Embedded.ParentProcessId={RavenServerRunner.get_process_id('0')}",
+            f"--Embedded.ParentProcessId={RavenServerRunner.get_process_id()}",
             f"--License.Eula.Accepted={'true' if options.accept_eula else 'false'}",
             f"--License.DisableAutoUpdate={'true' if options.licensing.disable_auto_update else 'false'}",
             (
@@ -147,8 +147,5 @@ class RavenServerRunner:
         return process
 
     @staticmethod
-    def get_process_id(fallback: str) -> str:
-        try:
-            return str(os.getpid())
-        except Exception:
-            return fallback
+    def get_process_id() -> str:
+        return str(os.getpid())
