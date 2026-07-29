@@ -133,6 +133,13 @@ the [RavenDB downloads page](https://ravendb.net/downloads).
 
 Runnable walkthrough: [Lab 02 — external self-contained server](labs/02-embedded-external-server.md).
 
+### Advanced server sources
+
+`with_external_server()` also accepts a ZIP archive containing RavenDB server files. Applications
+that ship the archive as a Python package resource can use
+`ExtractFromPkgResourceServerProvider(package, resource_name)`. For other sources, implement
+`ProvideRavenDBServer.provide(target_directory)` and assign the provider to `options.provider`.
+
 ## Configuration
 
 Create a `ServerOptions` instance before starting the server:

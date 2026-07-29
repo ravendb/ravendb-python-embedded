@@ -73,16 +73,21 @@ class ExtractFromZipServerProvider(ProvideRavenDBServer):
 
 
 class ExtractFromPkgResourceServerProvider(ProvideRavenDBServer):
-    def provide(self, target_directory):
-        resource_name = "ravendb_server.zip"
+    def __init__(
+        self,
+        package: str = "ravendb_embedded",
+        resource_name: str = "ravendb_server.zip",
+    ):
+        self.package = package
+        self.resource_name = resource_name
 
-        resource_data = pkgutil.get_data(self.__class__.__module__, resource_name)
+    def provide(self, target_directory):
+        resource_data = pkgutil.get_data(self.package, self.resource_name)
 
         if resource_data is None:
-            raise RuntimeError(f"Unable to find resource: {resource_name}")
+            raise RuntimeError(f"Unable to find resource '{self.resource_name}' in package '{self.package}'.")
 
-        with BytesIO(resource_data) as bytes_buffer:
-            ExtractFromZipServerProvider.unzip(bytes_buffer.read(), target_directory)
+        ExtractFromZipServerProvider.unzip(resource_data, target_directory)
 
 
 class ExternalServerProvider(ProvideRavenDBServer):

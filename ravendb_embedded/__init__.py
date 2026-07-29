@@ -10,5 +10,7 @@ from ravendb_embedded.provide import (
     CopyServerFromNugetProvider,
     CopyServerProvider,
     ExternalServerProvider,
+    ExtractFromPkgResourceServerProvider,
     ExtractFromZipServerProvider,
+    ProvideRavenDBServer,
 )

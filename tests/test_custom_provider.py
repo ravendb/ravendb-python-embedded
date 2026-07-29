@@ -1,5 +1,7 @@
 import io
+import importlib
 import shutil
+import sys
 import tempfile
 import zipfile
 from pathlib import Path
@@ -7,11 +9,38 @@ from unittest import TestCase
 
 from ravendb_embedded.embedded_server import EmbeddedServer
 from ravendb_embedded.options import ServerOptions, DatabaseOptions
-from ravendb_embedded.provide import CopyServerFromNugetProvider, ExtractFromZipServerProvider
+from ravendb_embedded.provide import (
+    CopyServerFromNugetProvider,
+    ExtractFromPkgResourceServerProvider,
+    ExtractFromZipServerProvider,
+)
 from tests import Person
 
 
 class TestCustomProvider(TestCase):
+    def test_can_extract_server_from_a_package_resource(self):
+        with tempfile.TemporaryDirectory() as temp_directory:
+            package_directory = Path(temp_directory, "example_server_package")
+            package_directory.mkdir()
+            Path(package_directory, "__init__.py").touch()
+            resource = Path(package_directory, "server.zip")
+            with zipfile.ZipFile(resource, "w") as zipped:
+                zipped.writestr("Server/Raven.Server.dll", "server")
+
+            sys.path.insert(0, temp_directory)
+            importlib.invalidate_caches()
+            try:
+                destination = Path(temp_directory, "extracted")
+                ExtractFromPkgResourceServerProvider(
+                    "example_server_package",
+                    "server.zip",
+                ).provide(str(destination))
+                self.assertTrue(Path(destination, "Server", "Raven.Server.dll").is_file())
+            finally:
+                sys.modules.pop("example_server_package", None)
+                sys.path.remove(temp_directory)
+                importlib.invalidate_caches()
+
     def test_external_zip_rejects_path_traversal(self):
         archive = io.BytesIO()
         with zipfile.ZipFile(archive, "w") as zipped:
