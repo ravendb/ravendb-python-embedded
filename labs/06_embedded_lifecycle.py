@@ -10,7 +10,6 @@ from ravendb_embedded import EmbeddedServer, ServerOptions
 def main() -> None:
     with tempfile.TemporaryDirectory() as work:
         options = ServerOptions()
-        options.accept_eula = True
         options.data_directory = str(Path(work, "data"))
         options.logs_path = str(Path(work, "logs"))
 

@@ -11,7 +11,7 @@ from ravendb_embedded.runtime_framework_version_matcher import (
 
 class TestRuntimeFrameworkVersionMatcher(TestCase):
     def test_match_1(self):
-        self.assertEqual("auto", ServerOptions().framework_version)
+        self.assertEqual("", ServerOptions().framework_version)
 
         options = ServerOptions()
 

@@ -27,7 +27,6 @@ from threading import Event
 from ravendb_embedded import EmbeddedServer, ServerOptions
 
 options = ServerOptions()
-options.accept_eula = True
 
 exit_observed = Event()
 exit_events = []

@@ -24,7 +24,6 @@ runtime:
 from ravendb_embedded import EmbeddedServer, ServerOptions
 
 options = ServerOptions()
-options.accept_eula = True  # Set only after reviewing the RavenDB EULA.
 
 with EmbeddedServer() as server:
     server.start_server(options)
@@ -68,7 +67,6 @@ self-contained RavenDB build:
 from ravendb_embedded import EmbeddedServer, ServerOptions
 
 options = ServerOptions()
-options.accept_eula = True
 options.with_auto_downloaded_server()
 options.data_directory = "./data/RavenDB"
 options.logs_path = "./logs/RavenDB"
@@ -117,7 +115,6 @@ Download and extract the Server package for the target platform, then point the 
 from ravendb_embedded import EmbeddedServer, ServerOptions
 
 options = ServerOptions()
-options.accept_eula = True
 options.with_external_server("/path/to/extracted/Server")
 
 with EmbeddedServer() as server:
@@ -145,18 +142,19 @@ Create a `ServerOptions` instance before starting the server:
 Construct options with `ServerOptions()`. The misleading `ServerOptions.INSTANCE()` constructor
 alias is deprecated and will be removed in a future release.
 
-- `data_directory`: where database data is stored; defaults to `./RavenDB` in the application's
-  current working directory.
+- `data_directory`: where database data is stored; retains the existing
+  `<package-directory>/RavenDB` default. Set it explicitly for applications that need a writable
+  or application-owned location.
 - `logs_path`: where RavenDB writes its logs; defaults to `<data_directory>/Logs` and follows a
   changed `data_directory` until you set `logs_path` explicitly.
-- `accept_eula`: must be set to `True` explicitly after reviewing the RavenDB EULA.
+- `accept_eula`: controls the RavenDB EULA command-line setting and defaults to `True`.
 - `server_url`: address to bind; the default uses localhost and a free port.
 - `dot_net_path`: path to `dotnet` for bundled mode when it is not on `PATH`.
 - `command_line_args`: additional
   [RavenDB server arguments](https://ravendb.net/docs/article-page/latest/csharp/server/configuration/command-line-arguments).
-- `framework_version`: defaults to `auto`, which reads the server runtime configuration and selects
-  a compatible installed .NET patch. Set an exact version for advanced setups, or `None`/`""` to
-  use the dotnet host's normal roll-forward behavior.
+- `framework_version`: defaults to `""`, preserving the dotnet host's normal runtime selection and
+  roll-forward behavior. Set it to `auto` to read the server runtime configuration and select a
+  compatible installed patch, or set an exact version for advanced setups.
 - `graceful_shutdown_timeout`: how long to wait before terminating the child process.
 - `process_kill_timeout`: how long to wait for the process after terminating or killing it.
 - `max_server_startup_time_duration`: maximum server startup time.
@@ -171,7 +169,6 @@ from datetime import timedelta
 from ravendb_embedded import EmbeddedServer, ServerOptions, ServerStartupTimeoutError
 
 options = ServerOptions()
-options.accept_eula = True
 options.max_server_startup_time_duration = timedelta(seconds=15)
 
 with EmbeddedServer() as server:
@@ -184,10 +181,9 @@ with EmbeddedServer() as server:
 
 ### License and EULA
 
-The package never accepts the RavenDB EULA on your behalf. Review the
-[RavenDB EULA](https://ravendb.net/legal/ravendb/commercial-license-eula) and set
-`options.accept_eula = True` before
-starting RavenDB.
+`accept_eula` remains enabled by default. Applications can configure it through
+`options.accept_eula`. See the
+[RavenDB EULA](https://ravendb.net/legal/ravendb/commercial-license-eula) for the applicable terms.
 
 Configure a license through `options.licensing`:
 
@@ -211,7 +207,6 @@ Use `ServerOptions.secured()` to start RavenDB over HTTPS:
 
 ```python
 options = ServerOptions()
-options.accept_eula = True
 options.secured(
     "server.pfx",
     "client.pem",
@@ -263,11 +258,9 @@ instance's process and document stores.
 
 ```python
 first_options = ServerOptions()
-first_options.accept_eula = True
 first_options.data_directory = "./servers/first"
 
 second_options = ServerOptions()
-second_options.accept_eula = True
 second_options.data_directory = "./servers/second"
 
 with EmbeddedServer() as first, EmbeddedServer() as second:
@@ -291,13 +284,10 @@ Runnable walkthrough: [Lab 06 — lifecycle and process monitoring](labs/06-embe
 
 ### Persistent data
 
-The default `./RavenDB` directory survives process restarts. Set `data_directory` explicitly when
-the application can run from different working directories or when several embedded servers run
-in one process. Use a temporary directory for disposable tests.
-
-Older package versions defaulted to a directory inside the installed Python package. Applications
-that need to reuse data created there should point `data_directory` at that existing location
-explicitly before upgrading their storage layout.
+The default data directory remains `RavenDB` inside the installed package directory. Set
+`data_directory` explicitly when the package directory may be read-only, the application owns its
+storage layout, or several embedded servers run in one process. Use a temporary directory for
+disposable tests.
 
 Runnable walkthrough: [Lab 05 — persistent data](labs/05-embedded-persistent.md).
 

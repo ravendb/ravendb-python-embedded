@@ -52,16 +52,18 @@ class LicensingOptions:
 class ServerOptions:
     BASE_MODULE_DIRECTORY = str(Path(__file__).parent)
     DEFAULT_SERVER_LOCATION = os.path.join(BASE_MODULE_DIRECTORY, CopyServerFromNugetProvider.SERVER_FILES)
+    _DEFAULT_DATA_DIRECTORY = BASE_MODULE_DIRECTORY + "/RavenDB"
+    _DEFAULT_LOGS_PATH = BASE_MODULE_DIRECTORY + "/RavenDB/Logs"
 
     def __init__(self):
-        self.framework_version: Optional[str] = "auto"
-        self._data_directory: str = str(Path.cwd() / "RavenDB")
+        self.framework_version: Optional[str] = ""
+        self._data_directory: str = self._DEFAULT_DATA_DIRECTORY
         self._logs_path: Optional[str] = None
         self.provider: ProvideRavenDBServer = CopyServerFromNugetProvider()
         self.target_server_location: str = self.DEFAULT_SERVER_LOCATION
         self.dot_net_path: str = "dotnet"
         self.clear_target_server_location: bool = False
-        self.accept_eula: bool = False
+        self.accept_eula: bool = True
         self.server_url: Optional[str] = None
         self.graceful_shutdown_timeout: timedelta = timedelta(seconds=30)
         self.process_kill_timeout: timedelta = timedelta(seconds=5)
@@ -80,7 +82,11 @@ class ServerOptions:
 
     @property
     def logs_path(self) -> str:
-        return self._logs_path or str(Path(self._data_directory) / "Logs")
+        if self._logs_path is not None:
+            return self._logs_path
+        if self._data_directory == self._DEFAULT_DATA_DIRECTORY:
+            return self._DEFAULT_LOGS_PATH
+        return str(Path(self._data_directory) / "Logs")
 
     @logs_path.setter
     def logs_path(self, value: Optional[str]) -> None:

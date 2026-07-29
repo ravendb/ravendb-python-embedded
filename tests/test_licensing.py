@@ -5,17 +5,11 @@ from pathlib import Path
 from unittest import TestCase
 
 from ravendb_embedded import EmbeddedServer, ServerOptions
-from ravendb_embedded.raven_server_runner import RavenServerRunner
 
 
 class TestLicensing(TestCase):
-    def test_eula_must_be_accepted_explicitly(self):
-        options = ServerOptions()
-
-        with self.assertRaises(ValueError) as context:
-            RavenServerRunner.run(options)
-
-        self.assertIn("set ServerOptions.accept_eula = True", str(context.exception))
+    def test_eula_acceptance_remains_enabled_by_default(self):
+        self.assertTrue(ServerOptions().accept_eula)
 
     def test_server_receives_all_licensing_options(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -33,7 +27,6 @@ class TestLicensing(TestCase):
             )
 
             options = ServerOptions()
-            options.accept_eula = True
             options.with_external_server(str(server_directory))
             options.dot_net_path = sys.executable
             options.framework_version = ""

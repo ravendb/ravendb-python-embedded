@@ -20,7 +20,6 @@ The core is just:
 from ravendb_embedded import EmbeddedServer, ServerOptions
 
 options = ServerOptions()
-options.accept_eula = True
 
 with EmbeddedServer() as server:
     server.start_server(options)
@@ -36,10 +35,10 @@ with EmbeddedServer() as server:
    server (`Raven.Server.dll`) that ships inside the wheel.
 2. `RavenServerRunner` launches it as **`dotnet Raven.Server.dll ...`**, using the `dotnet`
    found on your `PATH` (`ServerOptions.dot_net_path`).
-3. `ServerOptions.framework_version` defaults to `auto`. The package reads the bundled
-   `Raven.Server.runtimeconfig.json`, finds the required .NET line, and selects a compatible
-   installed patch. The host does **not** roll forward across major versions, which is why a
-   net10.0 server still requires .NET 10.
+3. `ServerOptions.framework_version` defaults to `""`, leaving runtime selection and roll-forward
+   to the dotnet host. Set it to `auto` when you want the package to read
+   `Raven.Server.runtimeconfig.json` and select a compatible installed patch. A net10.0 server
+   still requires .NET 10.
 4. The one exception: point the server at a **self-contained** build (an apphost
    `Raven.Server` with the runtime bundled) and it runs **without `dotnet`**. That is Lab 02.
 

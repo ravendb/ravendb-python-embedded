@@ -18,7 +18,6 @@ from ravendb_embedded import EmbeddedServer, ServerOptions
 
 def options(data_directory, logs_path):
     o = ServerOptions()
-    o.accept_eula = True
     o.data_directory = data_directory   # a fixed folder you reuse across restarts
     o.logs_path = logs_path
     return o
@@ -38,8 +37,9 @@ with EmbeddedServer() as server:
 
 ## Notes
 
-- The default `data_directory` is `./RavenDB` under the current working directory. Set it
-  explicitly when the application can start from different directories or needs a fixed location.
+- The default `data_directory` remains `RavenDB` inside the installed package directory. Set it
+  explicitly when the package directory may be read-only or the application needs a fixed,
+  application-owned location.
 - `get_document_store("Lab")` reuses the existing database on the second run; it only creates one
   when it is missing.
 

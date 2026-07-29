@@ -16,7 +16,6 @@ from ravendb_embedded import EmbeddedServer, ServerOptions
 
 def _options(data_directory, logs_path):
     options = ServerOptions()
-    options.accept_eula = True
     options.data_directory = data_directory
     options.logs_path = logs_path
     return options

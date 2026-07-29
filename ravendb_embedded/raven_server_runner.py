@@ -27,12 +27,6 @@ class RavenServerRunner:
 
     @staticmethod
     def run(options: ServerOptions) -> subprocess.Popen:
-        if not options.accept_eula:
-            raise ValueError(
-                "RavenDB EULA acceptance is required. Review the RavenDB EULA and set "
-                "ServerOptions.accept_eula = True before starting the server."
-            )
-
         client_certificate = RavenServerRunner._validate_security_options(options)
 
         if not options.target_server_location.strip():
