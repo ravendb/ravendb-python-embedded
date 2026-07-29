@@ -11,8 +11,7 @@ from ravendb_embedded.runtime_framework_version_matcher import (
 
 class TestRuntimeFrameworkVersionMatcher(TestCase):
     def test_match_1(self):
-        # Default framework version is unenforced (empty); match() returns it unchanged.
-        self.assertFalse(ServerOptions.INSTANCE().framework_version)
+        self.assertEqual("auto", ServerOptions.INSTANCE().framework_version)
 
         options = ServerOptions()
 
@@ -112,10 +111,29 @@ class TestRuntimeFrameworkVersionMatcher(TestCase):
                 RuntimeFrameworkVersionMatcher.get_framework_versions(options)
 
             self.assertEqual(
-                "Unable to execute dotnet to retrieve list of installed runtimes",
+                f"Unable to execute '{options.dot_net_path}' to retrieve installed .NET runtimes. "
+                "Install the required .NET runtime, set ServerOptions.dot_net_path, "
+                "or use with_auto_downloaded_server() to run without system .NET.",
                 str(context.exception),
             )
             self.assertIsInstance(context.exception.__cause__, OSError)
+
+    def test_reads_required_runtime_from_server_config(self):
+        with tempfile.TemporaryDirectory() as directory:
+            server = Path(directory, "Raven.Server.dll")
+            server.touch()
+            Path(directory, "Raven.Server.runtimeconfig.json").write_text(
+                '{"runtimeOptions":{"frameworks":['
+                '{"name":"Microsoft.NETCore.App","version":"10.0.9"},'
+                '{"name":"Microsoft.AspNetCore.App","version":"10.0.9"}'
+                "]}}",
+                encoding="utf-8",
+            )
+
+            self.assertEqual(
+                "10.0.9+",
+                RuntimeFrameworkVersionMatcher.required_framework_version(str(server)),
+            )
 
     def get_runtimes(self):
         result = [

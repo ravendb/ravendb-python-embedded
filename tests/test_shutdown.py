@@ -27,6 +27,7 @@ class TestShutdown(TestCase):
             options = ServerOptions()
             options.with_external_server(str(server_directory))
             options.dot_net_path = sys.executable
+            options.framework_version = ""
             options.data_directory = str(Path(directory, "data"))
             options.logs_path = str(Path(directory, "logs"))
             server = EmbeddedServer()
@@ -66,6 +67,7 @@ class TestShutdown(TestCase):
             options = ServerOptions()
             options.with_external_server(str(server_directory))
             options.dot_net_path = sys.executable
+            options.framework_version = ""
             options.data_directory = str(Path(directory, "data"))
             options.logs_path = str(Path(directory, "logs"))
 

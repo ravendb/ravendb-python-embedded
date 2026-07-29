@@ -95,17 +95,29 @@ class RavenServerRunner:
         if not is_sfa:
             command_line_args.insert(0, options.dot_net_path)
 
-            if options.framework_version:
-                framework_version = RuntimeFrameworkVersionMatcher.match(options)
+            requested_framework = options.framework_version
+            if requested_framework == RuntimeFrameworkVersionMatcher.AUTO:
+                requested_framework = RuntimeFrameworkVersionMatcher.required_framework_version(server_file_path)
+
+            if requested_framework:
+                framework_version = RuntimeFrameworkVersionMatcher.match(options, requested_framework)
                 command_line_args.insert(1, framework_version)
                 command_line_args.insert(1, "--fx-version")
 
-        process_builder = subprocess.Popen(
-            command_line_args,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
+        try:
+            process_builder = subprocess.Popen(
+                command_line_args,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except FileNotFoundError as error:
+            if is_sfa:
+                raise
+            raise RuntimeError(
+                f"Unable to execute the .NET host '{options.dot_net_path}'. Install the required .NET runtime, "
+                "set ServerOptions.dot_net_path, or use with_auto_downloaded_server() to run without system .NET."
+            ) from error
         process = process_builder
 
         return process

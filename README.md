@@ -140,7 +140,9 @@ Create a `ServerOptions` instance before starting the server:
 - `dot_net_path`: path to `dotnet` for bundled mode when it is not on `PATH`.
 - `command_line_args`: additional
   [RavenDB server arguments](https://ravendb.net/docs/article-page/latest/csharp/server/configuration/command-line-arguments).
-- `framework_version`: an exact .NET runtime version for advanced bundled-server setups.
+- `framework_version`: defaults to `auto`, which reads the server runtime configuration and selects
+  a compatible installed .NET patch. Set an exact version for advanced setups, or `None`/`""` to
+  use the dotnet host's normal roll-forward behavior.
 - `graceful_shutdown_timeout`: how long to wait before terminating the child process.
 - `process_kill_timeout`: how long to wait for the process after terminating or killing it.
 - `max_server_startup_time_duration`: maximum server startup time.

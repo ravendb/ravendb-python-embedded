@@ -43,7 +43,7 @@ class ServerOptions:
     DEFAULT_SERVER_LOCATION = os.path.join(BASE_MODULE_DIRECTORY, CopyServerFromNugetProvider.SERVER_FILES)
 
     def __init__(self):
-        self.framework_version: Optional[str] = ""
+        self.framework_version: Optional[str] = "auto"
         self.logs_path: str = self.BASE_MODULE_DIRECTORY + "/RavenDB/Logs"
         self.data_directory: str = self.BASE_MODULE_DIRECTORY + "/RavenDB"
         self.provider: ProvideRavenDBServer = CopyServerFromNugetProvider()
