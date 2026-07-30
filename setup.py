@@ -46,7 +46,7 @@ setup(
     include_package_data=True,
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    version="7.2.5.post1",
+    version="7.2.5.post2",
     description="RavenDB Embedded library to run RavenDB in an embedded way",
     author="RavenDB",
     author_email="support@ravendb.net",

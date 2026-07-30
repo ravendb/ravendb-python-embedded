@@ -37,8 +37,9 @@ with EmbeddedServer() as server:
 
 ## Notes
 
-- The default `data_directory` is a folder under the package location, which is fine for tests
-  but not what you want for real data. Set it explicitly to a path you control.
+- The default `data_directory` remains `RavenDB` inside the installed package directory. Set it
+  explicitly when the package directory may be read-only or the application needs a fixed,
+  application-owned location.
 - `get_document_store("Lab")` reuses the existing database on the second run; it only creates one
   when it is missing.
 

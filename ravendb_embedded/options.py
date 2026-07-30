@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import warnings
 from datetime import timedelta
 from pathlib import Path
 from typing import Optional
@@ -38,14 +39,26 @@ class SecurityOptions:
         self.certificate_arguments: Optional[str] = None
 
 
+class LicensingOptions:
+    def __init__(self):
+        self.license: Optional[str] = None
+        self.license_path: Optional[str] = None
+        self.disable_auto_update: bool = False
+        self.disable_auto_update_from_api: bool = False
+        self.disable_license_support_check: bool = True
+        self.throw_on_invalid_or_missing_license: bool = False
+
+
 class ServerOptions:
     BASE_MODULE_DIRECTORY = str(Path(__file__).parent)
     DEFAULT_SERVER_LOCATION = os.path.join(BASE_MODULE_DIRECTORY, CopyServerFromNugetProvider.SERVER_FILES)
+    _DEFAULT_DATA_DIRECTORY = BASE_MODULE_DIRECTORY + "/RavenDB"
+    _DEFAULT_LOGS_PATH = BASE_MODULE_DIRECTORY + "/RavenDB/Logs"
 
     def __init__(self):
         self.framework_version: Optional[str] = ""
-        self.logs_path: str = self.BASE_MODULE_DIRECTORY + "/RavenDB/Logs"
-        self.data_directory: str = self.BASE_MODULE_DIRECTORY + "/RavenDB"
+        self._data_directory: str = self._DEFAULT_DATA_DIRECTORY
+        self._logs_path: Optional[str] = None
         self.provider: ProvideRavenDBServer = CopyServerFromNugetProvider()
         self.target_server_location: str = self.DEFAULT_SERVER_LOCATION
         self.dot_net_path: str = "dotnet"
@@ -53,12 +66,39 @@ class ServerOptions:
         self.accept_eula: bool = True
         self.server_url: Optional[str] = None
         self.graceful_shutdown_timeout: timedelta = timedelta(seconds=30)
+        self.process_kill_timeout: timedelta = timedelta(seconds=5)
         self.max_server_startup_time_duration: timedelta = timedelta(minutes=1)
         self.command_line_args: list[str] = list()
+        self.licensing: LicensingOptions = LicensingOptions()
         self.security: Optional[SecurityOptions] = None
+
+    @property
+    def data_directory(self) -> str:
+        return self._data_directory
+
+    @data_directory.setter
+    def data_directory(self, value: str) -> None:
+        self._data_directory = value
+
+    @property
+    def logs_path(self) -> str:
+        if self._logs_path is not None:
+            return self._logs_path
+        if self._data_directory == self._DEFAULT_DATA_DIRECTORY:
+            return self._DEFAULT_LOGS_PATH
+        return str(Path(self._data_directory) / "Logs")
+
+    @logs_path.setter
+    def logs_path(self, value: Optional[str]) -> None:
+        self._logs_path = value
 
     @classmethod
     def INSTANCE(cls):
+        warnings.warn(
+            "ServerOptions.INSTANCE() is deprecated; construct ServerOptions() directly.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return cls()
 
     @classmethod
@@ -91,6 +131,29 @@ class ServerOptions:
         except Exception as e:
             raise RavenException(f"Unable to create secured server: {e}", e)
 
+        return self
+
+    def secured_with_certificate_exec(
+        self,
+        certificate_exec: str,
+        certificate_arguments: str,
+        client_pem_certificate_path: str,
+        ca_certificate_path: str = None,
+    ) -> "ServerOptions":
+        if certificate_exec is None:
+            raise ValueError("certificate_exec cannot be None")
+        if certificate_arguments is None:
+            raise ValueError("certificate_arguments cannot be None")
+        if client_pem_certificate_path is None:
+            raise ValueError("client_pem_certificate_path cannot be None")
+        if self.security is not None:
+            raise RuntimeError("The security has already been set up for this ServerOptions object")
+
+        self.security = SecurityOptions()
+        self.security.certificate_exec = certificate_exec
+        self.security.certificate_arguments = certificate_arguments
+        self.security.client_pem_certificate_path = client_pem_certificate_path
+        self.security.ca_certificate_path = ca_certificate_path
         return self
 
     def with_external_server(self, server_location: str) -> None:

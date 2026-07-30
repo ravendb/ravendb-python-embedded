@@ -1,6 +1,8 @@
 from __future__ import annotations
+import json
 import subprocess
 from enum import Enum
+from pathlib import Path
 from typing import Optional, Tuple, List
 
 from ravendb_embedded.options import ServerOptions
@@ -12,15 +14,17 @@ class MatchingType(Enum):
 
 
 class RuntimeFrameworkVersionMatcher:
+    AUTO = "auto"
     WILDCARD = "x"
     GREATER_OR_EQUAL = "+"
 
     @classmethod
-    def match(cls, options: ServerOptions) -> str:
-        if not cls.needs_match(options):
-            return options.framework_version
+    def match(cls, options: ServerOptions, framework_version: str = None) -> str:
+        framework_version = options.framework_version if framework_version is None else framework_version
+        if not cls.needs_match(options, framework_version):
+            return framework_version
 
-        runtime = RuntimeFrameworkVersion(options.framework_version)
+        runtime = RuntimeFrameworkVersion(framework_version)
         runtimes = cls.get_framework_versions(options)
 
         return cls.match_runtime(runtime, runtimes)
@@ -33,29 +37,45 @@ class RuntimeFrameworkVersionMatcher:
             if runtime.match(version):
                 return str(version)
 
-        available_runtimes = "- ".join([str(r) for r in sorted_runtimes])
+        available_runtimes = "\n- ".join([str(r) for r in sorted_runtimes])
         raise RuntimeError(
             f"Could not find a matching runtime for '{runtime}'. Available runtimes:\n- {available_runtimes}"
         )
 
     @classmethod
-    def needs_match(cls, options: ServerOptions) -> bool:
-        if not options or not options.framework_version:
+    def needs_match(cls, options: ServerOptions, framework_version: str = None) -> bool:
+        framework_version = options.framework_version if framework_version is None else framework_version
+        if not options or not framework_version:
             return False
 
-        framework_version = options.framework_version.lower()
+        framework_version = framework_version.lower()
         if cls.WILDCARD not in framework_version and cls.GREATER_OR_EQUAL not in framework_version:
             return False
 
         return True
+
+    @classmethod
+    def required_framework_version(cls, server_file_path: str) -> str:
+        runtime_config = Path(server_file_path).with_suffix(".runtimeconfig.json")
+        try:
+            config = json.loads(runtime_config.read_text(encoding="utf-8"))
+            frameworks = config["runtimeOptions"]["frameworks"]
+            version = next(item["version"] for item in frameworks if item["name"] == "Microsoft.NETCore.App")
+        except (OSError, ValueError, KeyError, StopIteration, TypeError) as error:
+            raise RuntimeError(
+                f"Unable to determine the required .NET runtime from '{runtime_config}'. "
+                "Set ServerOptions.framework_version explicitly to override automatic detection."
+            ) from error
+        return f"{version}{cls.GREATER_OR_EQUAL}"
 
     @staticmethod
     def get_framework_versions(options: ServerOptions):
         if not options.dot_net_path:
             raise RuntimeError("Dotnet path is not provided.")
 
-        process_command = [options.dot_net_path, "--info"]
+        process_command = [options.dot_net_path, "--list-runtimes"]
         runtimes = []
+        process = None
 
         try:
             with subprocess.Popen(
@@ -64,29 +84,24 @@ class RuntimeFrameworkVersionMatcher:
                 stderr=subprocess.PIPE,
                 text=True,
             ) as process:
-                inside_runtimes = False
-                runtime_lines = []
-
                 for line in process.stdout:
-                    line = line.strip()
-                    if line.startswith(".NET runtimes installed:") or line.startswith(".NET Core runtimes installed:"):
-                        inside_runtimes = True
+                    values = line.strip().split()
+                    if not values or values[0] != "Microsoft.NETCore.App":
                         continue
-                    if inside_runtimes and line.startswith("Microsoft.NETCore.App"):
-                        runtime_lines.append(line)
-
-                for runtime_line in runtime_lines:
-                    values = runtime_line.split(" ")
                     if len(values) < 2:
                         raise RuntimeError(
-                            f"Invalid runtime line. Expected 'Microsoft.NETCore.App x.x.x', but was '{runtime_line}'"
+                            f"Invalid runtime line. Expected 'Microsoft.NETCore.App x.x.x', but was '{line.strip()}'"
                         )
                     runtimes.append(RuntimeFrameworkVersion(values[1]))
 
         except Exception as e:
-            raise RuntimeError("Unable to execute dotnet to retrieve list of installed runtimes") from e
+            raise RuntimeError(
+                f"Unable to execute '{options.dot_net_path}' to retrieve installed .NET runtimes. "
+                "Install the required .NET runtime, set ServerOptions.dot_net_path, "
+                "or use with_auto_downloaded_server() to run without system .NET."
+            ) from e
         finally:
-            if process:
+            if process is not None and process.poll() is None:
                 process.kill()
         return runtimes
 

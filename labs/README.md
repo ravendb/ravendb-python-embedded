@@ -14,6 +14,7 @@ the released library and server binaries used by the scripts.
 | [03](03-on-demand-server.md) | On-demand cached self-contained download (no manual steps) | No |
 | [04](04-embedded-secured.md) | Secured embedded server (HTTPS + client certificate) | Yes |
 | [05](05-embedded-persistent.md) | Persistent data directory (data survives restarts) | Yes |
+| [06](06-embedded-lifecycle.md) | Stop, restart, PID, and process-exit monitoring | Yes |
 
 RavenDB version to .NET mapping: **7.1.x needs .NET 8, 7.2.x needs .NET 10.** The bundled server
 decides this, so it can change on a minor bump; check the lab for your version.

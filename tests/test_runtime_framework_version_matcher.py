@@ -1,3 +1,5 @@
+import tempfile
+from pathlib import Path
 from unittest import TestCase
 
 from ravendb_embedded.options import ServerOptions
@@ -9,8 +11,7 @@ from ravendb_embedded.runtime_framework_version_matcher import (
 
 class TestRuntimeFrameworkVersionMatcher(TestCase):
     def test_match_1(self):
-        # Default framework version is unenforced (empty); match() returns it unchanged.
-        self.assertFalse(ServerOptions.INSTANCE().framework_version)
+        self.assertEqual("", ServerOptions().framework_version)
 
         options = ServerOptions()
 
@@ -78,6 +79,7 @@ class TestRuntimeFrameworkVersionMatcher(TestCase):
             "Could not find a matching runtime for '3.1.4+'. Available runtimes:",
             str(context.exception),
         )
+        self.assertIn("\n- 5.0.4\n- 5.0.3\n- 5.0.0-rc.2.20475.17", str(context.exception))
 
         with self.assertRaises(RuntimeError) as context:
             RuntimeFrameworkVersion("6.0.0+-preview.6.21352.12")
@@ -99,6 +101,39 @@ class TestRuntimeFrameworkVersionMatcher(TestCase):
             "Cannot set 'minor' with value '1+' because '+' is not allowed.",
             str(context.exception),
         )
+
+    def test_missing_dotnet_preserves_execution_error(self):
+        with tempfile.TemporaryDirectory() as directory:
+            options = ServerOptions()
+            options.dot_net_path = str(Path(directory, "missing-dotnet"))
+
+            with self.assertRaises(RuntimeError) as context:
+                RuntimeFrameworkVersionMatcher.get_framework_versions(options)
+
+            self.assertEqual(
+                f"Unable to execute '{options.dot_net_path}' to retrieve installed .NET runtimes. "
+                "Install the required .NET runtime, set ServerOptions.dot_net_path, "
+                "or use with_auto_downloaded_server() to run without system .NET.",
+                str(context.exception),
+            )
+            self.assertIsInstance(context.exception.__cause__, OSError)
+
+    def test_reads_required_runtime_from_server_config(self):
+        with tempfile.TemporaryDirectory() as directory:
+            server = Path(directory, "Raven.Server.dll")
+            server.touch()
+            Path(directory, "Raven.Server.runtimeconfig.json").write_text(
+                '{"runtimeOptions":{"frameworks":['
+                '{"name":"Microsoft.NETCore.App","version":"10.0.9"},'
+                '{"name":"Microsoft.AspNetCore.App","version":"10.0.9"}'
+                "]}}",
+                encoding="utf-8",
+            )
+
+            self.assertEqual(
+                "10.0.9+",
+                RuntimeFrameworkVersionMatcher.required_framework_version(str(server)),
+            )
 
     def get_runtimes(self):
         result = [
