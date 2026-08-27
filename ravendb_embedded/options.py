@@ -103,8 +103,14 @@ class ServerOptions:
 
     @classmethod
     def from_external_server(cls, server_location: str) -> ServerOptions:
+        warnings.warn(
+            "ServerOptions.from_external_server() is deprecated; construct ServerOptions() and "
+            "call with_external_server(), which also runs a server directory in place.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         instance = cls()
-        instance.provider = ExternalServerProvider(server_location)
+        instance.with_external_server(server_location)
         return instance
 
     def secured(
