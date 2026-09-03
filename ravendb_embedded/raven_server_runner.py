@@ -87,9 +87,12 @@ class RavenServerRunner:
             f"--Logs.Path={options.logs_path}",
         ]
 
+        if options.licensing.license is not None and options.licensing.license_path is not None:
+            raise ValueError("Only one of the licence options 'license' or 'license_path' can be set, not both.")
+
         if options.licensing.license is not None:
             command_line_args.append(f"--License={options.licensing.license}")
-        if options.licensing.license_path is not None:
+        elif options.licensing.license_path is not None:
             command_line_args.append(f"--License.Path={options.licensing.license_path}")
 
         if options.security:
