@@ -46,7 +46,7 @@ setup(
     include_package_data=True,
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    version="7.2.5.post2",
+    version="7.2.5.post3",
     description="RavenDB Embedded library to run RavenDB in an embedded way",
     author="RavenDB",
     author_email="support@ravendb.net",
@@ -54,7 +54,7 @@ setup(
     license="Custom EULA",
     keywords="ravendb embedded database nosql doc db",
     install_requires=[
-        "ravendb==7.2.3.post1",
+        "ravendb~=7.2.3",
         "cryptography>=42.0.0",
     ],
     license_files=["LICENSE"],
