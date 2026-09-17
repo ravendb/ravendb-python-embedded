@@ -1,3 +1,5 @@
+import tempfile
+import warnings
 from pathlib import Path
 from unittest import TestCase
 
@@ -28,3 +30,16 @@ class TestServerOptions(TestCase):
             options = ServerOptions.INSTANCE()
 
         self.assertIsInstance(options, ServerOptions)
+
+    def test_from_external_server_is_deprecated_and_runs_a_directory_in_place(self):
+        with tempfile.TemporaryDirectory() as directory:
+            Path(directory, "Raven.Server.dll").write_text("", encoding="utf-8")
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always")
+                options = ServerOptions.from_external_server(directory)
+
+        self.assertIs(DeprecationWarning, caught[0].category)
+        self.assertIn("with_external_server", str(caught[0].message))
+        # The classmethod used to skip this, so a server directory was copied instead of run.
+        self.assertEqual(directory, options.target_server_location)
+        self.assertFalse(options.clear_target_server_location)
